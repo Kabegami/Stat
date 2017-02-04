@@ -113,32 +113,49 @@ def nb_place_kBateau(G,L):
     #fait 2 tour de boucles
     nbgrille = 0
     direction = ['h','v']
-    for bateau in L:
+    for i in range(0,G.taille):
+        for j in range(0,G.taille):
+            for Idbateau in range(0,len(L)-1):
+                for d in direction:
+                    #on fixe touts les bateaux sauf le dernier d'ou le len(L)-1
+                    if G.peut_placer(L[Idbateau],(i,j),d):
+                        G.place(L[Idbateau],(i,j),d)
+                        nbgrille += nb_facon_grille(G,L[Idbateau + 1])
+                        print((i,j),d)
+                        G.enleve(L[Idbateau],(i,j),d)    
+    return nbgrille
+
+def nb_place_kBateauRec(G,L):
+    #print("entrer dans la fonction rec avec la grille {} et les bateaux {}".format(G,L))
+    nbgrille = 0
+    if len(L) == 1:
+        return nb_facon_grille(G,L[0])
+    else:
+        direction = ['h','v']
         for i in range(0,G.taille):
             for j in range(0,G.taille):
                 for d in direction:
-                    if G.peut_placer(bateau,(i,j),d):
-                       G.place(bateau,(i,j),d)
-                       nbgrille += nb_facon_grille(G,bateau)
-                       print((i,j),d)
-                       G.enleve(bateau,(i,j),d)
-                       
-                    
-                        
+                    if G.peut_placer(L[0],(i,j),d):
+                        G.place(L[0],(i,j),d)
+                        nbgrille += nb_place_kBateauRec(G,L[1:])
+                        G.enleve(L[0],(i,j),d)
     return nbgrille
 
 # if __name__ == "__main__":
 g = genere_grille()
 g.show()
-g2 = Grille(2)
+g2 = Grille(3)
 L = liste_bateaux()
 test = []
-test.append(L[-1])
-test.append(L[-1])
-#test.append(L[-2])
+test.append(L[-2])
+test.append(L[-2])
+test.append(L[-2])
 
 print(test)
 cpt = nb_facon_grille(g2,test[0])
 errorincoming = nb_place_kBateau(g2,test)
 print(cpt)
 print(errorincoming)
+print("version recursive : ")
+Rec = nb_place_kBateauRec(g2,test)
+print(Rec)
