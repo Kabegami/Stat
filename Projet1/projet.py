@@ -4,6 +4,10 @@ import numpy as np
 import random
 import matplotlib.pyplot as pt
 
+#-----------------------------------------------
+#                    CLASSES
+#-----------------------------------------------
+
 class Grille(object):
     def __init__(self, taille=10):
         self.taille = taille
@@ -43,7 +47,8 @@ class Grille(object):
     def place(self,bateau, position, direction):
         #Attention le bateau est toujours placer vers la droite ou le bas par convention
         if not(self.peut_placer(bateau, position , direction)):
-            print("impossible de placer le bateau renvoi l'ancienne grille")
+            b = False
+           # print("impossible de placer le bateau renvoi l'ancienne grille")
         else:
             for i in range(bateau.taille):
                 if (direction == 'h'):
@@ -71,6 +76,7 @@ class Grille(object):
                 y = position[1] + i
             self.matrice[x,y] = 0
 
+
 class Bateau(object):
     def __init__(self,nom="RAOUL",idB=1,taille=1):
         self.taille = taille
@@ -80,7 +86,56 @@ class Bateau(object):
     def __repr__(self):
         return "nom : {} , taille : {}, id : {}".format(self.nom, self.taille, self.idB)
 
+class Joueur(object):
+    def __init__(self,nom="J1",taille=10, ListeBateauAdv=liste_bateaux()):
+        """Correspond a un joueur de bataille navale, possede une Grille et une Grille remplis de : 0 si la case non exploré, -1 si le coup a raté et 1 si il a touché un bateau"""
+        self.nom = nom
+        self.taille = taille
+        self.MaGrille = genere_grille(taille)
+        self.GrilleAdv = Grille()
+        self.ListeBateauAdv = ListeBateauAdv
 
+    def Tir(self,Adv,i,j):
+        """ Grille,int,int -> met a jour GrilleAdv""" 
+        if Adv.matrice[(i,j)] == 0:
+            #aucun bateau n'a ete touché
+            self.GrilleAdv.matrice[(i,j)] = -1
+        else:
+            self.GrilleAdv.matrice[(i,j)] = 1
+
+    def Aleatoire(self,Adv):
+        x = random.randint(0,Adv.taille-1)
+        y = random.randint(0,Adv.taille-1)
+        #si la case n'a pas encore été exploré
+        while(self.GrilleAdv.matrice[(x,y)] != 0):
+            x = random.randint(0,Adv.taille-1)
+            y = random.randint(0,Adv.taille-1)
+        self.Tir(Adv,x,y)
+
+    def BateauCouler(self,Adv,idBateau):
+        for x in range(Adv.taille):
+            for y in range(Adv.taille):
+                if Adv.matrice[(x,y)] == idBateau and self.GrilleAdv.matrice[(x,y)] != 1:
+                    return False
+        return True
+
+    def ResteBateau(self,Adv):
+        for bateau in self.ListeBateauAdv:
+            if not(self.BateauCouler(Adv,bateau.idB)):
+                return True
+        return False
+
+    def StrategieAleatoire(self,Adv):
+        cpt = 0
+        while self.ResteBateau(Adv):
+            self.Aleatoire(Adv)
+            cpt += 1
+        return cpt
+        
+
+#-------------------------------------------------------------
+#                          FONCTION
+#-------------------------------------------------------------
 def liste_bateaux():
     L = []
     L.append(Bateau("porte avion",1,5))
@@ -90,8 +145,8 @@ def liste_bateaux():
     L.append(Bateau("torpilleur",5,2))
     return L
     
-def genere_grille():
-    g = Grille(10)
+def genere_grille(taille=10):
+    g = Grille(taille)
     L = liste_bateaux()
     for b in L:
         g.place_alea(b)
@@ -126,9 +181,10 @@ def nb_place_kBateau(G,L):
     return nbgrille
 
 def nb_place_kBateauRec(G,L):
-    #print("entrer dans la fonction rec avec la grille {} et les bateaux {}".format(G,L))
+    #on fixe recursivement les differents bateaux
     nbgrille = 0
     if len(L) == 1:
+        #On calcule le nombre de facon de placer le dernier bateau
         return nb_facon_grille(G,L[0])
     else:
         direction = ['h','v']
@@ -141,9 +197,44 @@ def nb_place_kBateauRec(G,L):
                         G.enleve(L[0],(i,j),d)
     return nbgrille
 
+def nb_place_kBateauRec_Memoisation(G,L,dico):
+    #apparament comme G est un objet statique ne marche pas
+    TailleBateau = []
+    for i in L:
+        TailleBateau.append(i.taille)
+    if (G.matrice,TailleBateau) in dico:
+        return dico[(G.matrice,TailleBateau)]
+    nbgrille = 0
+    if len(L) == 1:
+        #On calcule le nombre de facon de placer le dernier bateau
+        n = nb_facon_grille(G,L[0])
+        dico[(G.matrice,L)] =  n
+        return n
+    else:
+        direction = ['h','v']
+        for i in range(0,G.taille):
+            for j in range(0,G.taille):
+                for d in direction:
+                    if G.peut_placer(L[0],(i,j),d):
+                        G.place(L[0],(i,j),d)
+                        nbgrille += nb_place_kBateauRec(G.matrice,L[1:])
+                        G.enleve(L[0],(i,j),d)
+    dico[(G.matrice,L)] = nbgrille
+    return nbgrille
+
+def genere_grille_egale(G):
+    cpt = 1
+    Galea = genere_grille(G.taille)
+    while Galea != G:
+        cpt += 1
+        Galea = genere_grille(G.taille)
+    return cpt
+    
+    
+
 # if __name__ == "__main__":
-g = genere_grille()
-g.show()
+g = genere_grille(4)
+#g.show()
 g2 = Grille(3)
 L = liste_bateaux()
 test = []
@@ -159,3 +250,16 @@ print(errorincoming)
 print("version recursive : ")
 Rec = nb_place_kBateauRec(g2,test)
 print(Rec)
+dico = dict()
+#nb = genere_grille_egale(g)
+#print("Nombre de tentative avant d'obtenir la meme grille : ",nb)
+
+j1 = Joueur()
+adv = genere_grille()
+print(adv)
+n = j1.StrategieAleatoire(adv)
+print("nombre de coup : ",n)
+print(j1.GrilleAdv)
+print(adv)
+j1.GrilleAdv.show()
+adv.show()
