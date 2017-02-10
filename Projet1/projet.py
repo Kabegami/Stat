@@ -35,22 +35,6 @@ def nb_facon_grille(G,b):
                     cpt += 1
     return cpt
 
-def nb_place_kBateau(G,L):
-    #fait 2 tour de boucles
-    nbgrille = 0
-    direction = ['h','v']
-    for i in range(0,G.taille):
-        for j in range(0,G.taille):
-            for Idbateau in range(0,len(L)-1):
-                for d in direction:
-                    #on fixe touts les bateaux sauf le dernier d'ou le len(L)-1
-                    if G.peut_placer(L[Idbateau],(i,j),d):
-                        G.place(L[Idbateau],(i,j),d)
-                        nbgrille += nb_facon_grille(G,L[Idbateau + 1])
-                        print((i,j),d)
-                        G.enleve(L[Idbateau],(i,j),d)    
-    return nbgrille
-
 def nb_place_kBateauRec(G,L):
     #on fixe recursivement les differents bateaux
     nbgrille = 0
@@ -67,6 +51,9 @@ def nb_place_kBateauRec(G,L):
                         nbgrille += nb_place_kBateauRec(G,L[1:])
                         G.enleve(L[0],(i,j),d)
     return nbgrille
+
+
+#APPROXIMATION A FAIRE (TOUT DOUX)>.<
 
 def nb_place_kBateauRec_Memoisation(G,L,dico):
     #apparament comme G est un objet statique ne marche pas
@@ -195,6 +182,7 @@ class Joueur(object):
         self.MaGrille = genere_grille(taille)
         self.GrilleAdv = Grille()
         self.ListeBateauAdv = ListeBateauAdv
+        self.GrilleProba = Grille()
 
     def Tir(self,Adv,i,j):
         """ Grille,int,int -> met a jour GrilleAdv""" 
@@ -207,7 +195,8 @@ class Joueur(object):
             return True
 
     def Aleatoire(self,Adv):
-        """ Grille -> (boolean, int, int) """
+        """ Grille -> (boolean, int, int) 
+        Appelle la fonction Tir"""
         x = random.randint(0,Adv.taille-1)
         y = random.randint(0,Adv.taille-1)
         #si la case n'a pas encore été exploré
@@ -222,22 +211,22 @@ class Joueur(object):
         cpt = 0
         curseur = 1
         #explore a droite
-        while self.Tir(Adv,x+curseur,y) and x+curseur < Adv.taille-1:
+        while  x+curseur < Adv.taille and self.Tir(Adv,x+curseur,y):
             curseur += 1
             cpt += 1
         curseur = 0
         #gauche
-        while self.Tir(Adv,x-curseur,y) and x-curseur > Adv.taille-1:
+        while x-curseur >= 0 and self.Tir(Adv,x-curseur,y):
             curseur += 1
             cpt += 1
         curseur = 0
         #bas
-        while self.Tir(Adv,x,y+curseur) and y+curseur < Adv.taille-1:
+        while y+curseur < Adv.taille and self.Tir(Adv,x,y+curseur):
             curseur += 1
             cpt += 1
         curseur = 0
         #haut
-        while self.Tir(Adv,x,y-curseur) and y-curseur > Adv.taille-1:
+        while y-curseur >= 0 and self.Tir(Adv,x,y-curseur):
             curseur += 1
             cpt += 1
         curseur = 0
@@ -270,13 +259,103 @@ class Joueur(object):
             (b,i,j) = self.Aleatoire(Adv)
             cpt += 1
             #tant qu'il n'a pas touché une case
-            while self.Aleatoire(Adv)[0] != 1:
-                cpt += 1
+            while b != True:
+                #La fonction aleatoire tire renvoi un boolean et la case
                 (b,i,j) = self.Aleatoire(Adv)
+            cpt += 1
+            print("entrer coup cible : ({},{})".format(i,j))
             cpt += self.Coup_Cible(Adv,i,j)
         return cpt
-            
+
+    def BateauPossible(self,b,x,y,i,j,d):
+        """ Prend un bateau b, et une position initiale x,y et une borne i,j """
+        if d == "h":
+            for c in range(i,j+1):
+                if self.GrilleAdv.matrice[(c,y)] == -1:
+                    return False
+            return True
+        else:
+            for c in range(i,j+1):
+                if self.GrilleAdv.matrice[(x,c)] == -1:
+                    return False
+            return True
     
+    def PossibiliteBateauSurCase(self,b,x,y):
+        """ Retourne si le bateau b peut être sur la case x,y en fonction des cases explorées
+        amelioration possible"""
+        i = x - b.taille
+        j = x
+        #verif des bornes inferieures
+        if i < 0:
+            i = 0
+            j = b.taille
+        nb = 0
+        #Axe horizontal
+        while  j < self.GrilleAdv.taille and j < x + b.taille:
+            if self.BateauPossible(b,x,y,i,j,"h"):
+                nb += 1
+            i += 1
+            j += 1
+            
+        #Axe vertical
+        i = y - b.taille
+        j = y
+        if i < 0:
+            i = 0
+            j = b.taille
+        while j < self.GrilleAdv.taille and j < y + b.taille:
+            if self.BateauPossible(b,x,y,i,j,"v"):
+                nb += 1
+            i += 1
+            j += 1
+        return nb
+
+
+    def MatriceProba(self, b):
+        """ Renvoie un tuple (b, GrilleProba) avec b = false si on peut placer le bateau nule part""" 
+        GrilleProba = Grille()
+        cpt = 0
+        #on calcule le nombre de position possible
+        for x in range(self.GrilleAdv.taille):
+            for y in range(self.GrilleAdv.taille):
+                cpt += self.PossibiliteBateauSurCase(b,x,y)
+        if cpt == 0:
+            return (False, GrilleProba)
+        #on actualise la matrice
+        for x in range(self.GrilleAdv.taille):
+            for y in range(self.GrilleAdv.taille):
+                nb = (float)(self.PossibiliteBateauSurCase(b,x,y))
+                GrilleProba.matrice[(x,y)] = nb/cpt
+        return (True, GrilleProba)
+
+    def UpdateGrilleProba(self):
+        cpt = 0
+        for b in self.ListeBateauAdv:
+            #si on peut placer le bateau
+            if self.MatriceProba(b)[0]:
+                self.GrilleProba.matrice = np.add(self.GrilleProba.matrice, self.MatriceProba(b)[1].matrice)
+        #print("UpdateGrilleProba :", self.GrilleProba)
+
+    def StrategieProbaSimple(self,Adv):
+        cpt = 0
+        maxPb = 0
+        xMax = 0
+        yMax = 0
+        while self.ResteBateau(Adv):
+            self.UpdateGrilleProba()
+            for x in range(self.GrilleProba.taille):
+                for y in range(self.GrilleProba.taille):
+                    #on verifie que la case n'a pas été deja exploré
+                    if self.GrilleProba.matrice[(x,y)] > maxPb and self.GrilleAdv.matrice[(x,y)] == 0:
+                        maxPb = self.GrilleProba.matrice[(x,y)]
+                        xMax = x
+                        yMax = y
+            #print(self.GrilleProba.matrice)
+            self.Tir(Adv,xMax,yMax)
+            print("tire sur la case ({},{})".format(xMax,yMax))
+            cpt += 1
+        return cpt
+        
 
 # if __name__ == "__main__":
 #g = genere_grille(4)
@@ -303,10 +382,8 @@ dico = dict()
 j1 = Joueur()
 adv = genere_grille()
 print(adv)
-n = j1.StrategieHeuristique(adv)
+n = j1.StrategieProbaSimple(adv)
 print("nombre de coup : ",n)
-print("j1.Grilleadv : ",j1.GrilleAdv)
-print(j1.ListeBateauAdv)
-print("adv : ",adv)
+print("matrice probabiliste :",j1.GrilleProba.matrice)
 j1.GrilleAdv.show("matrice d'exploration")
 adv.show("matrice de l'adversaire")
