@@ -271,18 +271,20 @@ class Joueur(object):
         """ Prend un bateau b, et une position initiale x,y et une borne i,j """
         if d == "h":
             for c in range(i,j+1):
-                if self.GrilleAdv.matrice[(c,y)] == -1:
+                if self.GrilleAdv.matrice[(c,y)] != 0:
                     return False
             return True
         else:
             for c in range(i,j+1):
-                if self.GrilleAdv.matrice[(x,c)] == -1:
+                if self.GrilleAdv.matrice[(x,c)] != -0:
                     return False
             return True
     
     def PossibiliteBateauSurCase(self,b,x,y):
         """ Retourne si le bateau b peut être sur la case x,y en fonction des cases explorées
         amelioration possible"""
+        if self.GrilleAdv.matrice[(x,y)] != 0:
+            return 0
         i = x - b.taille
         j = x
         #verif des bornes inferieures
@@ -315,6 +317,7 @@ class Joueur(object):
         """ Renvoie un tuple (b, GrilleProba) avec b = false si on peut placer le bateau nule part""" 
         GrilleProba = Grille()
         cpt = 0
+        somme = 0
         #on calcule le nombre de position possible
         for x in range(self.GrilleAdv.taille):
             for y in range(self.GrilleAdv.taille):
@@ -325,11 +328,15 @@ class Joueur(object):
         for x in range(self.GrilleAdv.taille):
             for y in range(self.GrilleAdv.taille):
                 nb = (float)(self.PossibiliteBateauSurCase(b,x,y))
+                somme += nb/cpt
                 GrilleProba.matrice[(x,y)] = nb/cpt
+        print("la somme des probabilité pour le bateau {} est : {}".format(b,somme))
         return (True, GrilleProba)
-
+    
     def UpdateGrilleProba(self):
         cpt = 0
+        self.GrilleProba.matrice =  np.zeros((self.GrilleProba.taille,self.GrilleProba.taille))
+        #probleme : on regarde encore les bateaux qui ont été coulé, aussi on a des fois ou on actualise pas la matrice
         for b in self.ListeBateauAdv:
             #si on peut placer le bateau
             if self.MatriceProba(b)[0]:
@@ -338,21 +345,27 @@ class Joueur(object):
 
     def StrategieProbaSimple(self,Adv):
         cpt = 0
-        maxPb = 0
-        xMax = 0
-        yMax = 0
         while self.ResteBateau(Adv):
+            maxPb = 0
+            xMax = 0
+            yMax = 0
+            #au bout d'un moment update grille proba ne s'actualise pas
             self.UpdateGrilleProba()
             for x in range(self.GrilleProba.taille):
                 for y in range(self.GrilleProba.taille):
                     #on verifie que la case n'a pas été deja exploré
-                    if self.GrilleProba.matrice[(x,y)] > maxPb and self.GrilleAdv.matrice[(x,y)] == 0:
+                    if ((self.GrilleProba.matrice[(x,y)] >= maxPb) and (self.GrilleAdv.matrice[(x,y)] == 0)):
+                        #print("point de la grille : ",self.GrilleAdv.matrice[(x,y)])
+                        #print("valeur de verité : ",self.GrilleAdv.matrice[(x,y)] == 0)
                         maxPb = self.GrilleProba.matrice[(x,y)]
                         xMax = x
                         yMax = y
             #print(self.GrilleProba.matrice)
             self.Tir(Adv,xMax,yMax)
             print("tire sur la case ({},{})".format(xMax,yMax))
+            print(self.GrilleProba.matrice[(xMax,yMax)])
+            print(self.GrilleProba.matrice)
+            #print(self.GrilleAdv)
             cpt += 1
         return cpt
         
@@ -368,10 +381,6 @@ test.append(L[-2])
 test.append(L[-2])
 
 print(test)
-cpt = nb_facon_grille(g2,test[0])
-errorincoming = nb_place_kBateau(g2,test)
-print(cpt)
-print(errorincoming)
 print("version recursive : ")
 Rec = nb_place_kBateauRec(g2,test)
 print(Rec)
