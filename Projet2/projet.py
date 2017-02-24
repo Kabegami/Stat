@@ -109,13 +109,142 @@ def simule_sequence(lg,m):
         retour.append(random.choice(L))
     return retour
 
+#-----------------------------------------------------------------
+#                      PARTIE 3 BAGUETTE
+#-----------------------------------------------------------------
+
+def transforme_lettre(mot):
+    L = []
+    for lettre in mot:
+        if lettre == "A":
+            L.append(0)
+        elif lettre == "C":
+            L.append(1)
+        elif lettre == "G":
+            L.append(2)
+        elif lettre == "T":
+            L.append(3)
+        else:
+            L.append(-1)
+    return L
+
+def code(m,k):
+    som = 0
+    for chiffre in m:
+        k -= 1
+        som += chiffre * 4 **(k)
+    return som
+
+def invCode(i,k):
+    L = []
+    for j in range(k,0,-1):
+        q = i//(4**(j-1))
+        r = i % (4**(j-1))
+        L.append(q)
+        i = r
+    return L
+
+def transforme_mot(nombre):
+    """int->str"""
+    m = ""
+    for chiffre in nombre:
+        if chiffre == 0:
+            m += ("A")
+        elif chiffre == 1:
+            m += ("C")
+        elif chiffre == 2:
+            m += ("G")
+        elif chiffre == 3:
+            m += ("T")
+        else:
+            m += ("-")
+    return m
+
+def nb_occurences(dico,sequence,k):
+    for i in range(0,len(sequence)-k+1):
+        valeur = code(sequence[i:i+k],k)
+        #valeur = transforme_mot(sequence[i:i+k])
+        if valeur >= 0:
+            if valeur not in dico:
+                dico[valeur] = 1
+            else:
+                dico[valeur] += 1
+
+def construit_tabk(k):
+    tabk = []
+    for i in range(4**k):
+        num = invCode(i,k)
+        #print("num : ",num)
+        tabk.append(transforme_mot(num))
+    return tabk
+
+def affiche_tabk(tabk,dico):
+    for i in dico:
+        print("{}:{}".format(tabk[i],dico[i]))
+
+def dico_tabk(tabk,dico):
+    dico_lettre = dict()
+    for i in range(len(tabk)):
+        dico_lettre[dico[i]] = tabk[i]
+    return dico_lettre
+                
+
+def comptage_observe(k,genome):
+    """
+        k : taille des mots
+        compte les mot dans le genome
+    """
+    dico = dict()
+    for ligne in genome:
+        nb_occurences(dico,ligne,k)
+    return dico
+
+def comptage_attendu(f,k,l):
+    dico = dict()
+    tab = construit_tabk(k)
+    for mot in tab:
+        proba = 1
+        nombre = transforme_lettre(mot)
+        for chiffre in nombre:
+            proba *= f[chiffre]
+        dico[mot] = proba*l
+    return dico
+        
+    
+        
 genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
+
+f = frequence_lettres_genome(genome)
+print(f)
+m = transforme_lettre("TAC")
+i = code(m,len(m))
+print(invCode(i,len(m)))
+
+s = transforme_lettre("ATCAT")
+print(s)
+
+dico = dict()
+nb_occurences(dico,s,2)
+print(dico)
+
+tab = construit_tabk(2)
+print(tab)
+
+affiche_tabk(tab,dico)
+
+l = compte_nucleotide(genome)
+d = comptage_attendu(f,2,l)
+d2 = comptage_observe(2,genome)
+d2_lettre = dico_tabk(d2,tab)
+print("comptage attendu : ",d)
+#affiche_tabk(tab,d2)
+print("comptage observe",d2_lettre)
 #for i in range(5):
 #    print(frequence_lettres(Question2[i]))
-print (frequence_lettres_genome(genome))
-print (sum(frequence_lettres_genome(genome)))
-sequence = [1,0,3]
-print(logprobafast(compte_lettres(sequence),(0.2,0.3,0.1,0.4)))
-s = simule_sequence(20,[0.2,0.3,0.1,0.4])
-print(s)
-print(frequence_lettres(s))
+#print (frequence_lettres_genome(genome))
+#print (sum(frequence_lettres_genome(genome)))
+#sequence = [1,0,3]
+#print(logprobafast(compte_lettres(sequence),(0.2,0.3,0.1,0.4)))
+#s = simule_sequence(20,[0.2,0.3,0.1,0.4])
+#print(s)
+#print(frequence_lettres(s))
