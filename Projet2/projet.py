@@ -213,14 +213,29 @@ def comptage_attendu(f,k,l):
     return dico
         
 
-def plot_expected(comptage_att, comptage_obs):
+def plot_expected_vs_observed(genome, k):
+    ''' k est la longueur des mots à dénombrer '''
     ''' comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)'''
+
+    freq = frequence_lettres_genome(genome)       # fréquence des lettres
+    nb = compte_nucleotide(genome)                # occurences des nucléotides
+    comptage_att = comptage_attendu(freq,k,nb)
+    comptage_obs = comptage_observe(k,genome)
+
+    print("fréquences de lettres attendues")
+    print(f)
+    print("comptage attendu")
+    affiche_tabk(comptage_att)
+    print("")
+    print("comptage observe")
+    affiche_tabk(comptage_obs)
+
     xvalues = comptage_att.values()
     yvalues = comptage_obs.values()
     #difference = [(x[i] - y[i]) for i in range(len(x))]
     #print(difference)
 
-    labels = [i for i in d.keys()]
+    labels = [i for i in comptage_att.keys()]
     #print(labels)
     # affichage graphique des occurrences
     fig, ax = plt.subplots()
@@ -280,23 +295,5 @@ print("")
 #                  TEST FREQUENCES ATTENDUES
 #-----------------------------------------------------------------
 
-f = frequence_lettres_genome(genome)
-print("fréquences de lettres attendues")
-print(f)
 
-tab = construit_tabk(2)
-print(tab)
-
-l = compte_nucleotide(genome)
-comptage_att = comptage_attendu(f,2,l)
-comptage_obs = comptage_observe(2,genome)
-d2_lettre = dico_tabk(d2,tab)
-
-print("comptage attendu")
-affiche_tabk(d)
-print("")
-
-print("comptage observe")
-affiche_tabk(d2_lettre)
-
-plot_expected(comptage_att, comptage_obs)
+plot_expected_vs_observed(genome, 2)
