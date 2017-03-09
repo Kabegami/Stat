@@ -115,7 +115,7 @@ def simule_sequence(lg,m):
 #                           PARTIE 3
 #-----------------------------------------------------------------
 
-def transforme_lettre(mot):
+def transforme_en_nombre(mot):
     L = []
     for lettre in mot:
         if lettre == "A":
@@ -146,8 +146,8 @@ def invCode(i,k):
         i = r
     return L
 
-def transforme_mot(nombre):
-    """int->str"""
+def transforme_en_lettre(nombre):
+    """tableau de int -> str"""
     m = ""
     for chiffre in nombre:
         if chiffre == 0:
@@ -162,24 +162,21 @@ def transforme_mot(nombre):
             m += ("-")
     return m
 
-def nb_occurences(dico,sequence,mots,k):
+def nb_occurences(occur,sequence,mots,k):
     '''
     dico : dictionnaire dans lequel on stocke les couples (mot, occurences)
     sequence : sequence a regarder
-    mots : mots possibles dans la séquence
     k : longueur d'un mot
     '''
-    
+
+
     for i in range(0,len(sequence)-k+1):
         valeur = code(sequence[i:i+k],k)
-        #valeur = transforme_mot(sequence[i:i+k])
         if valeur >= 0:
-            if valeur not in dico:
-                dico[valeur] = 1
-            else:
-                dico[valeur] += 1
+            occur[valeur] += 1
+    return occur
 
-def mots_possibles(k):
+def mots_possibles_lettres(k):
     '''
     renvoie le tableau des mots de longueur k qui peuvent être rencontrés
     '''
@@ -187,8 +184,14 @@ def mots_possibles(k):
     for i in range(4**k):
         num = invCode(i,k)
         #print("num : ",num)
-        tabk.append(transforme_mot(num))
+        tabk.append(transforme_en_lettre(num))
     return tabk
+
+def mots_possibles(k):
+    '''
+    renvoie le tableau des entiers correspondant aux entiers possibles
+    '''
+    return [x for x in range(4**k)]
 
 def affiche_nb_mots(dico):
     for i in dico:
@@ -207,10 +210,12 @@ def comptage_observe(k,sequence,mots):
     mots : tableau des mots possibles de longueur k
     compte les mots de longueur k suivant le tableau de mots possibles
     """
-    dico = dict()
+    # initialisation du dictionnaire pour chaque mot possible
+    occur = dict((key, 0) for key in mots)
+    
     for ligne in sequence:
-        nb_occurences(dico,ligne,mots,k)
-    return dico
+        nb_occurences(occur,ligne,mots,k)
+    return occur
 
 def comptage_attendu(k,mots,freq,nb):
     '''
@@ -221,8 +226,8 @@ def comptage_attendu(k,mots,freq,nb):
     dico = dict()
     for mot in mots:
         proba = 1
-        nombre = transforme_lettre(mot)
-        for chiffre in nombre:
+        tab_mot = invCode(mot, k)
+        for chiffre in tab_mot:
             proba *= freq[chiffre]
         dico[mot] = proba*nb
     return dico
@@ -238,10 +243,9 @@ def plot_expected_vs_observed(sequence, k):
     nbtotal = compte_nucleotide(sequence)           # occurences des nucléotides
 
     mots = mots_possibles(k)
+    mots_lettres = mots_possibles_lettres(k)
     comptage_att = comptage_attendu(k,mots,freq,nbtotal)
-    comptage_obs = comptage_observe(k,sequence, mots)
-    print(len(comptage_att))
-    print(len(comptage_obs))
+    comptage_obs = comptage_observe(k,sequence,mots)
 
 
     xvalues = comptage_att.values()
@@ -270,15 +274,18 @@ def plot_expected_vs_observed(sequence, k):
     # on montre les mots si la longueur est égale à 2
     # illisible si > 2
     if (k == 2):
+        print("nombre de nucléotides : " + str(nbtotal))
         print("fréquences de lettres attendues")
         print(freq)
         print("comptage attendu")
         affiche_nb_mots(comptage_att)
+        print("somme = " + str(sum(comptage_att.values())))
         print("")
         print("comptage observe")
         affiche_nb_mots(comptage_obs)
+        print("somme = " + str(sum(comptage_obs.values())))
         
-        labels = [i for i in comptage_att.keys()]
+        labels = [i for i in mots_lettres]
         for label, x, y in zip(labels, xvalues, yvalues):
             plt.annotate(
                 label,
@@ -308,12 +315,12 @@ met = lit_fasta("regulatory_seqs_MET.fasta")
 #                  TEST DESCRIPTION EMPIRIQUE
 #-----------------------------------------------------------------
 
-m = transforme_lettre("TAC")
+m = transforme_en_nombre("TAC")
 i = code(m,len(m))
 print(invCode(i,len(m)))
 
 
-s = transforme_lettre("ATCAT")
+s = transforme_en_nombre("ATCAT")
 print(s)
 print("-----------------------------")
 print("")
@@ -322,5 +329,4 @@ print("")
 #                  TEST FREQUENCES ATTENDUES
 #-----------------------------------------------------------------
 
-
-plot_expected_vs_observed(pho, 6)
+plot_expected_vs_observed(pho, 2)

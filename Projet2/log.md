@@ -6,6 +6,8 @@ A partir de k = 6, il commence à y avoir des motifs qui n'apparaissent pas dans
 
 * *Modification de `nb_occurences()`*
 
-  	Prend en paramètre le tableau des mots possibles pour prendre en compte le fait l'absence dans la séquence. Dans ce cas, on ajoute 0 au dictionnaire d'occurences pour ce mot.
+Passage en paramètre du tableau d'occurences des mots possibles, et renvoie le dictionnaire dont les clés sont les entiers-mot.
 
 * *Renommage de `construit_tabk()` en `mots_possibles()`*
+
+La fonction retourne un tableau d'entiers, un entier correspondant à un mot (donc dans l'intervalle [0, 4^k - 1]).
