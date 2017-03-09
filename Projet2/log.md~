@@ -1,0 +1,5 @@
+**Q3.1.3**
+A partir de k = 6, il commence à y avoir des motifs qui n'apparaissent pas dans la séquence. On peut donc avoir len(attendu) > len(observe).
+
+* Modif de comptage_observe
+  	prend en paramètre 

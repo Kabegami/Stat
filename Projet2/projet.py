@@ -162,7 +162,14 @@ def transforme_mot(nombre):
             m += ("-")
     return m
 
-def nb_occurences(dico,sequence,k):
+def nb_occurences(dico,sequence,mots,k):
+    '''
+    dico : dictionnaire dans lequel on stocke les couples (mot, occurences)
+    sequence : sequence a regarder
+    mots : mots possibles dans la séquence
+    k : longueur d'un mot
+    '''
+    
     for i in range(0,len(sequence)-k+1):
         valeur = code(sequence[i:i+k],k)
         #valeur = transforme_mot(sequence[i:i+k])
@@ -172,7 +179,10 @@ def nb_occurences(dico,sequence,k):
             else:
                 dico[valeur] += 1
 
-def construit_tabk(k):
+def mots_possibles(k):
+    '''
+    renvoie le tableau des mots de longueur k qui peuvent être rencontrés
+    '''
     tabk = []
     for i in range(4**k):
         num = invCode(i,k)
@@ -180,7 +190,7 @@ def construit_tabk(k):
         tabk.append(transforme_mot(num))
     return tabk
 
-def affiche_tabk(dico):
+def affiche_nb_mots(dico):
     for i in dico:
         print("{}: {}".format(i,dico[i]))
 
@@ -191,52 +201,54 @@ def dico_tabk(tabk,dico):
     return dico_lettre
                 
 
-def comptage_observe(k,genome):
+def comptage_observe(k,sequence,mots):
     """
-        k : taille des mots
-        compte les mot dans le genome
+    k : longueur d'un mot
+    mots : tableau des mots possibles de longueur k
+    compte les mots de longueur k suivant le tableau de mots possibles
     """
     dico = dict()
-    for ligne in genome:
-        nb_occurences(dico,ligne,k)
+    for ligne in sequence:
+        nb_occurences(dico,ligne,mots,k)
     return dico
 
-def comptage_attendu(f,k,l):
+def comptage_attendu(k,mots,freq,nb):
+    '''
+    f : tuple contenant la frequence attendue de chaque lettre
+    k : longueur du mot
+    nb : nombre total de nucléotides dans la séquence
+    '''
     dico = dict()
-    tab = construit_tabk(k)
-    for mot in tab:
+    for mot in mots:
         proba = 1
         nombre = transforme_lettre(mot)
         for chiffre in nombre:
-            proba *= f[chiffre]
-        dico[mot] = proba*l
+            proba *= freq[chiffre]
+        dico[mot] = proba*nb
     return dico
         
 
-def plot_expected_vs_observed(genome, k):
-    ''' k est la longueur des mots à dénombrer '''
-    ''' comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)'''
+def plot_expected_vs_observed(sequence, k):
+    ''' 
+    k est la longueur des mots à dénombrer
+    comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)
+    '''
 
-    freq = frequence_lettres_genome(genome)       # fréquence des lettres
-    nb = compte_nucleotide(genome)                # occurences des nucléotides
-    comptage_att = comptage_attendu(freq,k,nb)
-    comptage_obs = comptage_observe(k,genome)
+    freq = frequence_lettres_genome(sequence)       # fréquence des lettres
+    nbtotal = compte_nucleotide(sequence)           # occurences des nucléotides
 
-    print("fréquences de lettres attendues")
-    print(f)
-    print("comptage attendu")
-    affiche_tabk(comptage_att)
-    print("")
-    print("comptage observe")
-    affiche_tabk(comptage_obs)
+    mots = mots_possibles(k)
+    comptage_att = comptage_attendu(k,mots,freq,nbtotal)
+    comptage_obs = comptage_observe(k,sequence, mots)
+    print(len(comptage_att))
+    print(len(comptage_obs))
+
 
     xvalues = comptage_att.values()
     yvalues = comptage_obs.values()
     #difference = [(x[i] - y[i]) for i in range(len(x))]
     #print(difference)
 
-    labels = [i for i in comptage_att.keys()]
-    #print(labels)
     # affichage graphique des occurrences
     fig, ax = plt.subplots()
     ax.plot(xvalues, yvalues, 'o')
@@ -244,25 +256,40 @@ def plot_expected_vs_observed(genome, k):
         np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
         np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
     ]
-    ax.plot(lims, lims)
+    lim = [0.0, max(ax.get_xlim())]
+    ax.plot(lim, lim)
     ax.set_xlabel("Nombre d'occurences attendu")
     ax.set_ylabel("Nombre d'occurences observe")
     ax.set_xlim(lims)
     ax.set_ylim(lims)
+
+    title = "Mots de longueur " + str(k) + " pour la sequence PHO"
+    ax.set_title(title)
     ax.legend(loc='best')
 
-    for label, x, y in zip(labels, xvalues, yvalues):
-        plt.annotate(
-        label,
-            xy=(x, y), xytext=(-20, 20),
-            textcoords='offset points', ha='right', va='bottom',
-            bbox=dict(boxstyle='round,pad=0.5', fc='white', alpha=0.5),
-            arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
-    
+    # on montre les mots si la longueur est égale à 2
+    # illisible si > 2
+    if (k == 2):
+        print("fréquences de lettres attendues")
+        print(freq)
+        print("comptage attendu")
+        affiche_nb_mots(comptage_att)
+        print("")
+        print("comptage observe")
+        affiche_nb_mots(comptage_obs)
+        
+        labels = [i for i in comptage_att.keys()]
+        for label, x, y in zip(labels, xvalues, yvalues):
+            plt.annotate(
+                label,
+                xy=(x, y), xytext=(-20, 20), fontsize=8,
+                textcoords='offset points', ha='right', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.5', fc='white', alpha=0.5),
+                arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+
+    fig.set_size_inches(10, 6)
     fig.show()
 
-        
-genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
 
 #print (frequence_lettres_genome(genome))
 #print (sum(frequence_lettres_genome(genome)))
@@ -271,6 +298,11 @@ genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
 #s = simule_sequence(20,[0.2,0.3,0.1,0.4])
 #print(s)
 #print(frequence_lettres(s))
+
+genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
+pho = lit_fasta("regulatory_seq_PHO.fasta")
+gal = lit_fasta("regulatory_seqs_GAL.fasta")
+met = lit_fasta("regulatory_seqs_MET.fasta")
 
 #-----------------------------------------------------------------
 #                  TEST DESCRIPTION EMPIRIQUE
@@ -283,11 +315,6 @@ print(invCode(i,len(m)))
 
 s = transforme_lettre("ATCAT")
 print(s)
-
-dico = dict()
-nb_occurences(dico,s,2)
-print(dico)
-
 print("-----------------------------")
 print("")
 
@@ -296,4 +323,4 @@ print("")
 #-----------------------------------------------------------------
 
 
-plot_expected_vs_observed(genome, 2)
+plot_expected_vs_observed(pho, 6)
