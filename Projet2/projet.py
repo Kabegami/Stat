@@ -4,6 +4,8 @@ import os
 import math
 import io
 import random
+import matplotlib.pyplot as plt
+import numpy as np
 
 def ouvre(fichier):
     L = []
@@ -110,7 +112,7 @@ def simule_sequence(lg,m):
     return retour
 
 #-----------------------------------------------------------------
-#                      PARTIE 3 BAGUETTE
+#                           PARTIE 3
 #-----------------------------------------------------------------
 
 def transforme_lettre(mot):
@@ -178,9 +180,9 @@ def construit_tabk(k):
         tabk.append(transforme_mot(num))
     return tabk
 
-def affiche_tabk(tabk,dico):
+def affiche_tabk(dico):
     for i in dico:
-        print("{}:{}".format(tabk[i],dico[i]))
+        print("{}: {}".format(i,dico[i]))
 
 def dico_tabk(tabk,dico):
     dico_lettre = dict()
@@ -210,15 +212,59 @@ def comptage_attendu(f,k,l):
         dico[mot] = proba*l
     return dico
         
+
+def plot_expected(comptage_att, comptage_obs):
+    ''' comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)'''
+    xvalues = comptage_att.values()
+    yvalues = comptage_obs.values()
+    #difference = [(x[i] - y[i]) for i in range(len(x))]
+    #print(difference)
+
+    labels = [i for i in d.keys()]
+    #print(labels)
+    # affichage graphique des occurrences
+    fig, ax = plt.subplots()
+    ax.plot(xvalues, yvalues, 'o')
+    lims = [
+        np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
+        np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
+    ]
+    ax.plot(lims, lims)
+    ax.set_xlabel("Nombre d'occurences attendu")
+    ax.set_ylabel("Nombre d'occurences observe")
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    ax.legend(loc='best')
+
+    for label, x, y in zip(labels, xvalues, yvalues):
+        plt.annotate(
+        label,
+            xy=(x, y), xytext=(-20, 20),
+            textcoords='offset points', ha='right', va='bottom',
+            bbox=dict(boxstyle='round,pad=0.5', fc='white', alpha=0.5),
+            arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
     
+    fig.show()
+
         
 genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
 
-f = frequence_lettres_genome(genome)
-print(f)
+#print (frequence_lettres_genome(genome))
+#print (sum(frequence_lettres_genome(genome)))
+#sequence = [1,0,3]
+#print(logprobafast(compte_lettres(sequence),(0.2,0.3,0.1,0.4)))
+#s = simule_sequence(20,[0.2,0.3,0.1,0.4])
+#print(s)
+#print(frequence_lettres(s))
+
+#-----------------------------------------------------------------
+#                  TEST DESCRIPTION EMPIRIQUE
+#-----------------------------------------------------------------
+
 m = transforme_lettre("TAC")
 i = code(m,len(m))
 print(invCode(i,len(m)))
+
 
 s = transforme_lettre("ATCAT")
 print(s)
@@ -227,24 +273,30 @@ dico = dict()
 nb_occurences(dico,s,2)
 print(dico)
 
+print("-----------------------------")
+print("")
+
+#-----------------------------------------------------------------
+#                  TEST FREQUENCES ATTENDUES
+#-----------------------------------------------------------------
+
+f = frequence_lettres_genome(genome)
+print("fréquences de lettres attendues")
+print(f)
+
 tab = construit_tabk(2)
 print(tab)
 
-affiche_tabk(tab,dico)
-
 l = compte_nucleotide(genome)
-d = comptage_attendu(f,2,l)
-d2 = comptage_observe(2,genome)
+comptage_att = comptage_attendu(f,2,l)
+comptage_obs = comptage_observe(2,genome)
 d2_lettre = dico_tabk(d2,tab)
-print("comptage attendu : ",d)
-#affiche_tabk(tab,d2)
-print("comptage observe",d2_lettre)
-#for i in range(5):
-#    print(frequence_lettres(Question2[i]))
-#print (frequence_lettres_genome(genome))
-#print (sum(frequence_lettres_genome(genome)))
-#sequence = [1,0,3]
-#print(logprobafast(compte_lettres(sequence),(0.2,0.3,0.1,0.4)))
-#s = simule_sequence(20,[0.2,0.3,0.1,0.4])
-#print(s)
-#print(frequence_lettres(s))
+
+print("comptage attendu")
+affiche_tabk(d)
+print("")
+
+print("comptage observe")
+affiche_tabk(d2_lettre)
+
+plot_expected(comptage_att, comptage_obs)
