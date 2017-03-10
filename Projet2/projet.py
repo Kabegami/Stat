@@ -18,31 +18,35 @@ def ouvre(fichier):
     return L
 
 def compte_nucleotide(sequence):
-    cpt = 0
-    for i in range(len(sequence)):
-        if sequence[i][0] != ">":
-            cpt += len(sequence[i])
-    return cpt
+    return len(sequence)
 
 def lit_fasta(fichier):
+    '''
+    fichier -> [[int]]
+    retourne la liste de liste de int
+    '''
+    L = enleve_titre_sequence(fichier)
+    retour = []
+    for lettre in L:
+        if lettre == "A":
+            retour.append(0)
+        elif lettre == "C":
+            retour.append(1)
+        elif lettre == "G":
+            retour.append(2)
+        elif lettre == "T":
+            retour.append(3)
+        else:
+            retour.append(-1)
+    return retour
+
+def enleve_titre_sequence(fichier):
     L = ouvre(fichier)
     retour = []
     for i in range(len(L)):
         if L[i][0] != ">":
-            ligne = []
-            for lettre in L[i]:
-                if lettre == "A":
-                    ligne.append(0)
-                elif lettre == "C":
-                    ligne.append(1)
-                elif lettre == "G":
-                    ligne.append(2)
-                elif lettre == "T":
-                    ligne.append(3)
-                else:
-                    ligne.append(-1)
-            retour.append(ligne)
-    return retour
+           retour.append(L[i])
+    return ''.join(retour)
                     
 def compte_lettres(liste_entier):
     #on travail sur des entier(le numero associé au lettre) pas sur les indices des dico
@@ -70,24 +74,6 @@ def frequence_lettres(liste_entier):
         L[i] = L[i]/(float)(cpt)    
     return (L[0], L[1], L[2], L[3])
 
-def frequence_lettres_genome(genome):
-    # init
-    frequence = []
-    for i in range(4):
-        frequence.append(0)
-
-    nb = len(genome)
-    for ligne in genome:
-        res = frequence_lettres(ligne)
-        if res == (0,0,0,0):
-            nb -= 1
-        for i in range(len(res)):
-            frequence[i] += res[i]
-
-    for i in range(len(frequence)):
-        frequence[i] = frequence[i] / (float)(nb)
-    return (frequence[0], frequence[1], frequence[2], frequence[3])
-
 def logproba(liste_entier, m):
     proba = 0
     for nb in liste_entier:
@@ -100,7 +86,16 @@ def logprobafast(nb_lettre, m):
         proba += nb_lettre[i]*math.log(m[i])
     return proba
 
+def simule_sequence2(lg,m):
+    retour = []
+    v = np.cumsum(m)
+    for i in lg:
+        retour.append(random.choice(v))
+    return retour
+    
 def simule_sequence(lg,m):
+    """ lg -> longueur, m frequences des lettres
+    legerement incorrect car on cast le nombre d'element"""
     L = []
     retour = []
     entiers= [0,1,2,3]
@@ -169,7 +164,6 @@ def nb_occurences(occur,sequence,mots,k):
     k : longueur d'un mot
     '''
 
-
     for i in range(0,len(sequence)-k+1):
         valeur = code(sequence[i:i+k],k)
         if valeur >= 0:
@@ -212,9 +206,7 @@ def comptage_observe(k,sequence,mots):
     """
     # initialisation du dictionnaire pour chaque mot possible
     occur = dict((key, 0) for key in mots)
-    
-    for ligne in sequence:
-        nb_occurences(occur,ligne,mots,k)
+    nb_occurences(occur,sequence,mots,k)
     return occur
 
 def comptage_attendu(k,mots,freq,nb):
@@ -239,7 +231,7 @@ def plot_expected_vs_observed(sequence, k):
     comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)
     '''
 
-    freq = frequence_lettres_genome(sequence)       # fréquence des lettres
+    freq = frequence_lettres(sequence)       # fréquence des lettres
     nbtotal = compte_nucleotide(sequence)           # occurences des nucléotides
 
     mots = mots_possibles(k)
@@ -260,7 +252,6 @@ def plot_expected_vs_observed(sequence, k):
         np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
         np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
     ]
-    lim = [0.0, max(ax.get_xlim())]
     ax.plot(lim, lim)
     ax.set_xlabel("Nombre d'occurences attendu")
     ax.set_ylabel("Nombre d'occurences observe")
@@ -297,6 +288,48 @@ def plot_expected_vs_observed(sequence, k):
     fig.set_size_inches(10, 6)
     fig.show()
 
+#-----------------------------------------------------------------
+#             SIMULATION DE SEQUENCES ALEATOIRES
+#-----------------------------------------------------------------
+
+def simulation(tailleSequence, nombreSequence, frequenceDesLettres):
+    L = []
+    for i in range(nombreSequence):
+        L.append(simule_sequence(tailleSequence,frequenceDesLettres))
+    return L
+
+def calcule_proba_empirique(k,liste_mot,listeSequence, frequence_lettres, tailleSequence):
+    probaMot = [0,0,0,0]
+    mots = mots_possibles(k)
+    mots_lettres = mots_possibles_lettres(k)
+    comptage_att = comptage_attendu(k,mots,frequence_lettres,tailleSequence)
+    somme = 0
+    for sequence in listeSequence:
+        comptage_obs = comptage_observe(k,sequence,mots)
+        for key in comptage_obs:
+            for i in range(len(probaMot)):
+                #si c'est un des mots recherché
+                if liste_mot[i] == key:
+                    probaMot[i] += comptage_obs[key]
+                somme += comptage_obs[key]
+    #cast
+    somme = somme * 1.0
+    for i in range(len(probaMot)):
+        probaMot[i] = probaMot[i] / somme
+    return probaMot
+        
+    #difference = [(x[i] - y[i]) for i in range(len(x))]
+    #print(difference)
+
+def histo_proba_mot(liste_mots, proba_mots):
+    dico = dict((liste_mots[i], proba_mots[i]) for i in range(len(liste_mots)))
+    fig, ax = plt.subplots()
+    # a corriger
+    ax.hist(dico.values())
+    ax.set_ylim([min(proba_mots), max(proba_mots)])
+    fig.show()
+
+
 
 #print (frequence_lettres_genome(genome))
 #print (sum(frequence_lettres_genome(genome)))
@@ -329,4 +362,19 @@ print("")
 #                  TEST FREQUENCES ATTENDUES
 #-----------------------------------------------------------------
 
-plot_expected_vs_observed(pho, 2)
+#print(frequence_lettres(pho))
+#plot_expected_vs_observed(pho, 2)
+
+
+liste_mots2 = ["ATCTGC", "ATATAT", "TTTAAA", "AAAAAA"]
+liste_mots = []
+k = len(liste_mots2[0])
+for m in liste_mots2:
+    liste_mots.append(code(transforme_en_nombre(m),len(m)))
+print(liste_mots)
+    
+freq = frequence_lettres(pho)
+liste_sequences = simulation(len(pho), 2, freq)
+toto = calcule_proba_empirique(k,liste_mots, liste_sequences, freq, len(pho))
+print(toto)
+histo_proba_mot(liste_mots,toto)
