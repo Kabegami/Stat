@@ -1,11 +1,18 @@
-import os
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
+import os
 import math
 import io
 import random
-import matplotlib.pyplot as plt
 import numpy as np
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
+#-----------------------------------------------------------------
+#                LECTURE DES FICHIERS ET DONNEES
+#-----------------------------------------------------------------
 
 def ouvre(fichier):
     L = []
@@ -107,7 +114,7 @@ def simule_sequence(lg,m):
     return retour
 
 #-----------------------------------------------------------------
-#                           PARTIE 3
+#                  PARTIE 3 : DESCRIPTION EMPIRIQUE
 #-----------------------------------------------------------------
 
 def transforme_en_nombre(mot):
@@ -126,6 +133,10 @@ def transforme_en_nombre(mot):
     return L
 
 def code(m,k):
+    '''
+    m : mot préalablement converti en tableau d'entiers
+    k : longueur du mot
+    '''
     som = 0
     for chiffre in m:
         k -= 1
@@ -211,11 +222,12 @@ def comptage_observe(k,sequence,mots):
 
 def comptage_attendu(k,mots,freq,nb):
     '''
-    f : tuple contenant la frequence attendue de chaque lettre
     k : longueur du mot
+    mots : liste de mots possibles (sous forme de tableau d'entiers)
+    freq : tuple contenant la frequence attendue de chaque lettre
     nb : nombre total de nucléotides dans la séquence
     '''
-    dico = dict()
+    dico = dict((key, 0) for key in mots)
     for mot in mots:
         proba = 1
         tab_mot = invCode(mot, k)
@@ -231,7 +243,7 @@ def plot_expected_vs_observed(sequence, k):
     comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)
     '''
 
-    freq = frequence_lettres(sequence)       # fréquence des lettres
+    freq = frequence_lettres(sequence)              # fréquence des lettres
     nbtotal = compte_nucleotide(sequence)           # occurences des nucléotides
 
     mots = mots_possibles(k)
@@ -254,7 +266,7 @@ def plot_expected_vs_observed(sequence, k):
     ]
     ax.plot(lim, lim)
     ax.set_xlabel("Nombre d'occurences attendu")
-    ax.set_ylabel("Nombre d'occurences observe")
+    ax.set_ylabel("Nombre d'occurences observé")
     ax.set_xlim(lims)
     ax.set_ylim(lims)
 
@@ -292,52 +304,95 @@ def plot_expected_vs_observed(sequence, k):
 #             SIMULATION DE SEQUENCES ALEATOIRES
 #-----------------------------------------------------------------
 
-def simulation(tailleSequence, nombreSequence, frequenceDesLettres):
+def simulation(taille_sequence, nombre_sequence, frequence_lettres):
     L = []
-    for i in range(nombreSequence):
-        L.append(simule_sequence(tailleSequence,frequenceDesLettres))
+    for i in range(nombre_sequence):
+        L.append(simule_sequence(taille_sequence,frequence_lettres))
     return L
 
-def calcule_proba_empirique(k,liste_mot,listeSequence, frequence_lettres, tailleSequence):
-    probaMot = [0,0,0,0]
+def calcule_proba_empirique(n, k, liste_mots, liste_sequences, frequence_lettres):
+    '''
+    n : nombre de fois où on observe chaque mot, pour calculer la probabilité empirique
+    '''
+
+    # stocke le nombre de séquences où chaque mot est apparu au moins n fois
+    count_nb_sequences = [0 for i in range(len(liste_mots))]
+
     mots = mots_possibles(k)
     mots_lettres = mots_possibles_lettres(k)
-    comptage_att = comptage_attendu(k,mots,frequence_lettres,tailleSequence)
+    comptage_att = comptage_attendu(k, mots, frequence_lettres, len(liste_sequences[0]))
     somme = 0
-    for sequence in listeSequence:
+    for sequence in liste_sequences:
         comptage_obs = comptage_observe(k,sequence,mots)
         for key in comptage_obs:
-            for i in range(len(probaMot)):
-                #si c'est un des mots recherché
-                if liste_mot[i] == key:
-                    probaMot[i] += comptage_obs[key]
-                somme += comptage_obs[key]
-    #cast
-    somme = somme * 1.0
-    for i in range(len(probaMot)):
-        probaMot[i] = probaMot[i] / somme
-    return probaMot
-        
-    #difference = [(x[i] - y[i]) for i in range(len(x))]
-    #print(difference)
+            for i in range(len(liste_mots)):
+                #si c'est un des mots recherchés et qu'on a nombre d'occurences >= n
+                if liste_mots[i] == key:
+                    if comptage_obs[key] >= n:
+                        count_nb_sequences[i] += 1
 
-def histo_proba_mot(liste_mots, proba_mots):
-    dico = dict((liste_mots[i], proba_mots[i]) for i in range(len(liste_mots)))
+    print(count_nb_sequences)
+    dico_proba = dict()
+    for i in range(len(count_nb_sequences)):
+        tab_mot = invCode(liste_mots[i], k)
+        mot_lettre = transforme_en_lettre(tab_mot)
+        count_nb_sequences[i] = count_nb_sequences[i] / (len(liste_sequences)*1.0)
+        dico_proba[mot_lettre] = count_nb_sequences[i]
+                
+    return dico_proba
+
+def histo_proba_mot(n, liste_mots, proba_mots, nombre_sequences):
     fig, ax = plt.subplots()
-    # a corriger
-    ax.hist(dico.values())
-    ax.set_ylim([min(proba_mots), max(proba_mots)])
+
+    # espacement des labels sur l'axe x
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    x = np.arange(len(liste_mots))
+    labels = []
+    proba = []
+    bar_width = 0.3
+    alpha = 0.8
+    for i in range((n+1)/2):
+        proba.append(proba_mots[i].values())
+        labels.append("n = " + str(i*2+1))
+
+    ax.bar(x - bar_width, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
+    ax.bar(x, proba[1], bar_width, label=labels[1], align='center', alpha=alpha)
+    ax.bar(x + bar_width, proba[2], bar_width, label=labels[2], align='center', alpha=alpha)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(proba_mots[0].keys())
+    ax.set_title("Probabilité d'observer un mot au moins n fois sur "
+                  + str(nombre_sequences) + " sequences")
+    ax.set_ylabel("Probabilité")
+    ax.legend(loc='best')
     fig.show()
 
+def plot_distribution_mots(n, sequence, liste_mots_lettres, k, nombre_sequences):
+    '''
+    n : nombre de fois où on observe chaque mot, pour calculer la probabilité empirique
+    k est la longueur d'un mot
+    '''
+    liste_mots = []
+    for m in liste_mots_lettres:
+        liste_mots.append(code(transforme_en_nombre(m), k))
+        
+    freq = frequence_lettres(sequence)
+    liste_sequences = simulation(len(sequence), nombre_sequences, freq)
+    dist = calcule_proba_empirique(n-4, k, liste_mots, liste_sequences, freq)
+    dist2 = calcule_proba_empirique(n-2, k, liste_mots, liste_sequences, freq)
+    dist3 = calcule_proba_empirique(n, k, liste_mots, liste_sequences, freq)
+        
+    print("n = 1",dist)
+    print("n = 3",dist2)
+    print("n = 5",dist3)
+    histo_proba_mot(n, liste_mots, [dist, dist2, dist3], nombre_sequences)
 
 
-#print (frequence_lettres_genome(genome))
-#print (sum(frequence_lettres_genome(genome)))
-#sequence = [1,0,3]
-#print(logprobafast(compte_lettres(sequence),(0.2,0.3,0.1,0.4)))
-#s = simule_sequence(20,[0.2,0.3,0.1,0.4])
-#print(s)
-#print(frequence_lettres(s))
+
+#-----------------------------------------------------------------
+#                           TESTS
+#-----------------------------------------------------------------
 
 genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
 pho = lit_fasta("regulatory_seq_PHO.fasta")
@@ -365,16 +420,9 @@ print("")
 #print(frequence_lettres(pho))
 #plot_expected_vs_observed(pho, 2)
 
+#-----------------------------------------------------------------
+#             TEST SIMULATION DE SEQUENCES ALEATOIRES
+#-----------------------------------------------------------------
 
-liste_mots2 = ["ATCTGC", "ATATAT", "TTTAAA", "AAAAAA"]
-liste_mots = []
-k = len(liste_mots2[0])
-for m in liste_mots2:
-    liste_mots.append(code(transforme_en_nombre(m),len(m)))
-print(liste_mots)
-    
-freq = frequence_lettres(pho)
-liste_sequences = simulation(len(pho), 2, freq)
-toto = calcule_proba_empirique(k,liste_mots, liste_sequences, freq, len(pho))
-print(toto)
-histo_proba_mot(liste_mots,toto)
+liste_mots = ["ATCTGC", "ATATAT", "TTTAAA", "AAAAAA"]
+plot_distribution_mots(5, pho, liste_mots, 6, 1000)
