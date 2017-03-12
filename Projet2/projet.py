@@ -9,6 +9,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+from scipy.special import binom
 
 #-----------------------------------------------------------------
 #                LECTURE DES FICHIERS ET DONNEES
@@ -168,9 +169,9 @@ def transforme_en_lettre(nombre):
             m += ("-")
     return m
 
-def nb_occurences(occur,sequence,mots,k):
+def nb_occurrences(occur,sequence,mots,k):
     '''
-    dico : dictionnaire dans lequel on stocke les couples (mot, occurences)
+    dico : dictionnaire dans lequel on stocke les couples (mot, occurrences)
     sequence : sequence a regarder
     k : longueur d'un mot
     '''
@@ -217,7 +218,7 @@ def comptage_observe(k,sequence,mots):
     """
     # initialisation du dictionnaire pour chaque mot possible
     occur = dict((key, 0) for key in mots)
-    nb_occurences(occur,sequence,mots,k)
+    nb_occurrences(occur,sequence,mots,k)
     return occur
 
 def comptage_attendu(k,mots,freq,nb):
@@ -240,11 +241,11 @@ def comptage_attendu(k,mots,freq,nb):
 def plot_expected_vs_observed(sequence, k):
     ''' 
     k est la longueur des mots à dénombrer
-    comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurences)
+    comptage_att et comptage_obs sont des dictionnaires (mot, nombre d'occurrences)
     '''
 
     freq = frequence_lettres(sequence)              # fréquence des lettres
-    nbtotal = compte_nucleotide(sequence)           # occurences des nucléotides
+    nbtotal = compte_nucleotide(sequence)           # occurrences des nucléotides
 
     mots = mots_possibles(k)
     mots_lettres = mots_possibles_lettres(k)
@@ -264,9 +265,9 @@ def plot_expected_vs_observed(sequence, k):
         np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
         np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
     ]
-    ax.plot(lim, lim)
-    ax.set_xlabel("Nombre d'occurences attendu")
-    ax.set_ylabel("Nombre d'occurences observé")
+    ax.plot(lims, lims)
+    ax.set_xlabel("Nombre d'occurrences attendu")
+    ax.set_ylabel("Nombre d'occurrences observé")
     ax.set_xlim(lims)
     ax.set_ylim(lims)
 
@@ -352,7 +353,7 @@ def histo_proba_mot(n, liste_mots, proba_mots, nombre_sequences):
     proba = []
     bar_width = 0.3
     alpha = 0.8
-    for i in range((n+1)/2):
+    for i in range((n/2)+1):
         proba.append(proba_mots[i].values())
         labels.append("n = " + str(i*2+1))
 
@@ -378,6 +379,7 @@ def plot_distribution_mots(n, sequence, liste_mots_lettres, k, nombre_sequences)
         liste_mots.append(code(transforme_en_nombre(m), k))
         
     freq = frequence_lettres(sequence)
+    print(freq)
     liste_sequences = simulation(len(sequence), nombre_sequences, freq)
     dist = calcule_proba_empirique(n-4, k, liste_mots, liste_sequences, freq)
     dist2 = calcule_proba_empirique(n-2, k, liste_mots, liste_sequences, freq)
@@ -388,6 +390,24 @@ def plot_distribution_mots(n, sequence, liste_mots_lettres, k, nombre_sequences)
     print("n = 5",dist3)
     histo_proba_mot(n, liste_mots, [dist, dist2, dist3], nombre_sequences)
 
+def proba_theorique(k, n, l):
+    q = l - k + 1
+    a = binom(q, n)
+    b = (1.0/4**k)**n
+    c = (1 - (1.0/4**k))**(q-n)
+    return a*b*c
+
+def proba_theorique_freq(mot, k, n, l, freq):
+    proba = 1
+    tab_mot = invCode(mot, k)
+    for chiffre in tab_mot:
+            proba *= freq[chiffre]
+            
+    q = l - k + 1
+    a = binom(q, n)
+    b = (proba)**n
+    c = (1.0 - proba)**(q-n)
+    return a*b*c
 
 
 #-----------------------------------------------------------------
@@ -425,4 +445,7 @@ print("")
 #-----------------------------------------------------------------
 
 liste_mots = ["ATCTGC", "ATATAT", "TTTAAA", "AAAAAA"]
-plot_distribution_mots(5, pho, liste_mots, 6, 1000)
+plot_distribution_mots(5, pho, liste_mots, len(liste_mots[0]), 100)
+mot = code(transforme_en_nombre(liste_mots[0]),6)
+print(1-proba_theorique(len(liste_mots[0]), 0, len(pho)))
+print(1-proba_theorique_freq(mot,len(liste_mots[0]), 0, len(pho), frequence_lettres(pho)))
