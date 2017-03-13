@@ -182,22 +182,26 @@ def nb_occurrences(occur,sequence,mots,k):
             occur[valeur] += 1
     return occur
 
-def mots_possibles_lettres(k):
-    '''
-    renvoie le tableau des mots de longueur k qui peuvent être rencontrés
-    '''
-    tabk = []
-    for i in range(4**k):
-        num = invCode(i,k)
-        #print("num : ",num)
-        tabk.append(transforme_en_lettre(num))
-    return tabk
-
 def mots_possibles(k):
     '''
     renvoie le tableau des entiers correspondant aux entiers possibles
     '''
     return [x for x in range(4**k)]
+
+def mots_possibles_lettres(k):
+    '''
+    renvoie le dico des mots de longueur k qui peuvent être rencontrés
+    '''
+    mots = mots_possibles(k)
+    dico = dict((key, 0) for key in mots)
+    for i in dico:
+        num = invCode(i,k)
+        #print("num : ",num)
+        #tabk.append(transforme_en_lettre(num))
+        dico[i] = transforme_en_lettre(num)
+    return dico
+
+
 
 def affiche_nb_mots(dico):
     for i in dico:
@@ -332,7 +336,6 @@ def calcule_proba_empirique(n, k, liste_mots, liste_sequences, frequence_lettres
                     if comptage_obs[key] >= n:
                         count_nb_sequences[i] += 1
 
-    print(count_nb_sequences)
     dico_proba = dict()
     for i in range(len(count_nb_sequences)):
         tab_mot = invCode(liste_mots[i], k)
@@ -357,13 +360,13 @@ def histo_proba_mot(n, liste_mots, proba_mots, nombre_sequences):
         proba.append(proba_mots[i].values())
         labels.append("n = " + str(i*2+1))
 
-    ax.bar(x - bar_width, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
-    ax.bar(x, proba[1], bar_width, label=labels[1], align='center', alpha=alpha)
-    ax.bar(x + bar_width, proba[2], bar_width, label=labels[2], align='center', alpha=alpha)
+    #ax.bar(x - bar_width, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
+    ax.bar(x, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
+    #ax.bar(x + bar_width, proba[2], bar_width, label=labels[2], align='center', alpha=alpha)
 
     ax.set_xticks(x)
     ax.set_xticklabels(proba_mots[0].keys())
-    ax.set_title("Probabilité d'observer un mot au moins n fois sur "
+    ax.set_title("Probabilité d'observer un mot au moins " + str(n) + " fois sur "
                   + str(nombre_sequences) + " sequences")
     ax.set_ylabel("Probabilité")
     ax.legend(loc='best')
@@ -381,14 +384,24 @@ def plot_distribution_mots(n, sequence, liste_mots_lettres, k, nombre_sequences)
     freq = frequence_lettres(sequence)
     print(freq)
     liste_sequences = simulation(len(sequence), nombre_sequences, freq)
-    dist = calcule_proba_empirique(n-4, k, liste_mots, liste_sequences, freq)
-    dist2 = calcule_proba_empirique(n-2, k, liste_mots, liste_sequences, freq)
-    dist3 = calcule_proba_empirique(n, k, liste_mots, liste_sequences, freq)
+    dist = calcule_proba_empirique(n, k, liste_mots, liste_sequences, freq)
         
     print("n = 1",dist)
-    print("n = 3",dist2)
-    print("n = 5",dist3)
-    histo_proba_mot(n, liste_mots, [dist, dist2, dist3], nombre_sequences)
+    
+    histo_proba_mot(n, liste_mots, [dist], nombre_sequences)
+
+#-----------------------------------------------------------------
+#                     PROBABILITES DE MOTS
+#-----------------------------------------------------------------
+
+'''
+Dans les fonctions qui suivent, les paramètres sont les suivants :
+    k : longueur d'un mot
+    n : nombre de fois où le mot dont on souhaite calculer la probabilité
+    l : longueur totale de la séquence étudiée
+    mot : mot dont on veut étudier la probabilité d'apparition
+    freq : tuple des fréquences d'apparition de chaque lettre dans une séquence donnée
+'''
 
 def proba_theorique(k, n, l):
     q = l - k + 1
@@ -401,14 +414,99 @@ def proba_theorique_freq(mot, k, n, l, freq):
     proba = 1
     tab_mot = invCode(mot, k)
     for chiffre in tab_mot:
-            proba *= freq[chiffre]
-            
+        proba *= freq[chiffre]
+
     q = l - k + 1
     a = binom(q, n)
     b = (proba)**n
     c = (1.0 - proba)**(q-n)
     return a*b*c
 
+def proba_poisson(mot, k, n, l, freq):
+    proba = 1
+    tab_mot = invCode(mot, k)
+    for chiffre in tab_mot:
+        proba *= freq[chiffre]
+
+    q = l - k + 1
+    lamb = q * proba
+    return math.exp(-lamb)*(lamb**n)/math.factorial(n)
+
+def proba_occurrence(liste_mots, n, longueur_sequence, freq):
+    '''
+    liste_mots est la liste des mots en chaines de caracteres (pour la visibilité)
+    '''
+    proba = dict((key, 0) for key in liste_mots)
+
+    for mot in liste_mots:
+        mot_entiers = code(transforme_en_nombre(mot),len(mot))
+        proba_mot = 1
+
+        # par application de la formule de l'événement contraire
+        for i in range(n):
+            proba_mot -= proba_poisson(mot_entiers, len(mot), i, longueur_sequence, freq)
+        proba[mot] = proba_mot
+    return proba
+
+def plot_graph_theo(n, liste_mots, proba_mots, proba_theo, nombre_sequences):
+    fig, ax = plt.subplots()
+
+    # espacement des labels sur l'axe x
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    x = np.arange(len(liste_mots))
+    labels = ["empirique", "théorique"]
+    proba = [proba_mots.values(), proba_theo.values()]
+    bar_width = 0.3
+    alpha = 0.8
+
+    #ax.bar(x - bar_width, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
+    ax.bar(x - bar_width/2, proba[0], bar_width, label=labels[0], align='center', alpha=alpha)
+    ax.bar(x + bar_width/2, proba[1], bar_width, label=labels[1], align='center', alpha=alpha)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(proba_mots.keys())
+    ax.set_title("Probabilité d'observer un mot au moins " + str(n) + " fois sur "
+                  + str(nombre_sequences) + " sequences")
+    ax.set_ylabel("Probabilité")
+    ax.legend(loc='best')
+    fig.show()
+
+def plot_theorique_vs_empirique(n, sequence, liste_mots, nombre_sequences):
+    liste_mots2 = []
+    for m in liste_mots:
+        liste_mots2.append(code(transforme_en_nombre(m), len(m)))
+    freq = frequence_lettres(sequence)
+
+    sim = simulation(len(sequence), nombre_sequences, freq) 
+    proba_emp = calcule_proba_empirique(n, len(liste_mots[0]), liste_mots2, sim, freq)
+    proba_theo = proba_occurrence(liste_mots, n, len(sequence), freq)
+    print(proba_theo)
+    print(proba_emp)
+    plot_graph_theo(n, liste_mots, proba_emp, proba_theo, nombre_sequences)
+
+def mots_inattendus(n, k, sequence, nombre_sequences):
+    '''
+    n : nombre d'occurences minimum
+    k : longueur d'un mot
+    '''
+    
+    mots = mots_possibles(k)
+    mots_lettres = mots_possibles_lettres(k)
+    freq = frequence_lettres(sequence)
+    sim = simulation(len(sequence), nombre_sequences, freq) 
+    proba_emp = calcule_proba_empirique(n, k, mots, sim, freq)
+
+    liste_mots = [mots_lettres[i] for i in range(len(mots_lettres))]
+    proba_theo = proba_occurrence(liste_mots, n, len(sequence), freq)
+
+    #print(proba_theo)
+    #print(proba_emp)
+    mots_surprise = []
+    for key in proba_theo:
+        if 5*proba_theo[key] < proba_emp[key]:
+            mots_surprise.append((key, proba_theo[key], proba_emp[key]))
+    return mots_surprise
 
 #-----------------------------------------------------------------
 #                           TESTS
@@ -418,6 +516,11 @@ genome = lit_fasta("yeast_s_cerevisae_genomic_chr1-4.fna")
 pho = lit_fasta("regulatory_seq_PHO.fasta")
 gal = lit_fasta("regulatory_seqs_GAL.fasta")
 met = lit_fasta("regulatory_seqs_MET.fasta")
+
+print(len(genome))
+print(len(pho))
+print(len(gal))
+print(len(met))
 
 #-----------------------------------------------------------------
 #                  TEST DESCRIPTION EMPIRIQUE
@@ -444,8 +547,16 @@ print("")
 #             TEST SIMULATION DE SEQUENCES ALEATOIRES
 #-----------------------------------------------------------------
 
-liste_mots = ["ATCTGC", "ATATAT", "TTTAAA", "AAAAAA"]
-plot_distribution_mots(5, pho, liste_mots, len(liste_mots[0]), 100)
+liste_mots = ["ATCTGC", "TTTAAA", "ATATAT", "AAAAAA"]
+
+print("probabilités empiriques")
+#plot_distribution_mots(1, pho, liste_mots, len(liste_mots[0]), 1000)
 mot = code(transforme_en_nombre(liste_mots[0]),6)
-print(1-proba_theorique(len(liste_mots[0]), 0, len(pho)))
-print(1-proba_theorique_freq(mot,len(liste_mots[0]), 0, len(pho), frequence_lettres(pho)))
+
+print("\nprobabilités théoriques")
+#print(1-proba_theorique(len(liste_mots[i]), 0, len(pho)))
+#print(1-proba_theorique_freq(mot,len(liste_mots[0]), 0, len(pho), freq))
+#print(1 - proba_poisson(mot, len(liste_mots[0]), 0, len(pho), freq))
+
+#plot_theorique_vs_empirique(1, pho, liste_mots, 1000)
+#print(mots_inattendus(4, 6, pho, 100))
