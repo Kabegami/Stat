@@ -96,9 +96,16 @@ def logprobafast(nb_lettre, m):
 
 def simule_sequence2(lg,m):
     retour = []
-    v = np.cumsum(m)
-    for i in lg:
-        retour.append(random.choice(v))
+    for i in range(lg):
+        r = random.random()
+        if r < m[0]:
+            retour.append(0)
+        if r > m[0] and r < m[1] + m[0]:
+            retour.append(1)
+        if r > m[0] + m[1] and r < m[1] + m[0] + m[2]:
+            retour.append(2)
+        if r >  m[1] + m[0] + m[2]:
+            retour.append(3)
     return retour
     
 def simule_sequence(lg,m):
@@ -345,6 +352,12 @@ def calcule_proba_empirique(n, k, liste_mots, liste_sequences, frequence_lettres
                 
     return dico_proba
 
+#Fonction pour le calcule de l'interval de confiance
+def ecart_type(dico_proba):
+    moyenne = 1/len(dico_proba)
+    for valeur in dico_proba.values():
+        ecart_type = valeur - moyenne
+
 def histo_proba_mot(n, liste_mots, proba_mots, nombre_sequences):
     fig, ax = plt.subplots()
 
@@ -554,6 +567,10 @@ print("probabilités empiriques")
 mot = code(transforme_en_nombre(liste_mots[0]),6)
 
 print("\nprobabilités théoriques")
+s = simule_sequence2(100,[0.2,0.3,0.4,0.1])
+f = frequence_lettres(s)
+print(s)
+print(f)
 #print(1-proba_theorique(len(liste_mots[i]), 0, len(pho)))
 #print(1-proba_theorique_freq(mot,len(liste_mots[0]), 0, len(pho), freq))
 #print(1 - proba_poisson(mot, len(liste_mots[0]), 0, len(pho), freq))
