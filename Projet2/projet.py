@@ -550,6 +550,33 @@ print("-----------------------------")
 print("")
 
 #-----------------------------------------------------------------
+#                         PARTIE 3.4
+#-----------------------------------------------------------------
+
+def construit_M(dico_comptage_mot):
+    #initialisation
+    M = [0,0,0,0]*4
+    for mot in dico_comptage_mot:
+        lettre_prec = mot[0]
+        lettre_actu = mot[1]
+        M[lettre_prec][lettre_actu] += 1
+
+    #puis on transforme en proba
+
+    L = []
+    for l1 in M:
+        somme = 0
+        for l2 in l1:
+            somme += M[l1][l2]
+        L.append(somme)
+
+    i = 0
+    for l1 in M:
+        for l2 in l1:
+            M[l1][l2] = M[l1][l2] / (1.0*L[i])
+        i += 1
+    return M
+#-----------------------------------------------------------------
 #                  TEST FREQUENCES ATTENDUES
 #-----------------------------------------------------------------
 
