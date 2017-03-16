@@ -404,8 +404,8 @@ def ecart_type_proba_empirique(n,k,dico_proba,liste_mot,liste_sequences):
                 if liste_mots[i] == key:
                     if comptage_obs[key] >= n:
                         count_nb_sequences_local[i] += 1
-        for variance in liste_ecart_type:
-            variance += (count_nb_sequences[i]  - dico_proba[i])**2
+            for variance in liste_ecart_type:
+                variance += (count_nb_sequences[i]  - dico_proba[i])**2
     for v in liste_ecart_type:
         v = math.sqrt(v)
     return liste_ecart_type
@@ -567,6 +567,7 @@ def mots_inattendus(n, k, sequence, nombre_sequences):
     sim = simulation(len(sequence), nombre_sequences, freq) 
     proba_emp = calcule_proba_empirique(n, k, mots, sim, freq)
 
+
     liste_mots = [mots_lettres[i] for i in range(len(mots_lettres))]
     proba_theo = proba_occurrence(liste_mots, n, len(sequence), freq)
 
@@ -611,7 +612,8 @@ print("")
 #-----------------------------------------------------------------
 
 def construit_M(dico_comptage_mot):
-    """ construit M a partir du dictionnaire des mots de taille 2 """
+    """ construit M a partir du dictionnaire des mots de taille 2
+    on utilisant un dictionnaire qui compte les mots on a les mots qui ce chevauche donc c'est plus précis"""
     #initialisation
     M = []
     for i in range(4):
@@ -732,10 +734,16 @@ liste_mots = ["ATCTGC", "TTTAAA", "ATATAT", "AAAAAA"]
 print("probabilités empiriques")
 #plot_distribution_mots(1, pho, liste_mots, len(liste_mots[0]), 1000)
 mot = code(transforme_en_nombre(liste_mots[0]),6)
+print("mot : {}".format(mot))
+f = frequence_lettres(s)
+s = simulation(len(pho),1000,f)
+#dico_p = calcule_proba_empirique(5,4,liste_mots,s,f)
+#print("liste_mots")
+#dico_ecart_type = ecart_type_proba_empirique(5,4,dico_p,liste_mots,s)
+#print("dico ecart type : {}".format(dico_ecart_type))
 
 print("\nprobabilités théoriques")
 s = simule_sequence2(100,[0.2,0.3,0.4,0.1])
-f = frequence_lettres(s)
 print(s)
 print(f)
 #print(1-proba_theorique(len(liste_mots[i]), 0, len(pho)))
