@@ -734,10 +734,14 @@ liste_mots = ["ATCTGC", "TTTAAA", "ATATAT", "AAAAAA"]
 print("probabilités empiriques")
 #plot_distribution_mots(1, pho, liste_mots, len(liste_mots[0]), 1000)
 mot = code(transforme_en_nombre(liste_mots[0]),6)
-print("mot : {}".format(mot))
+print("liste_mot : {}".format(liste_mots))
 f = frequence_lettres(s)
 s = simulation(len(pho),1000,f)
-#dico_p = calcule_proba_empirique(5,4,liste_mots,s,f)
+liste_mots2 = []
+for m in liste_mots:
+    liste_mots2.append(code(transforme_en_nombre(m), len(m)))
+dico_p = calcule_proba_empirique(5,4,liste_mots2,s,f)
+print("proba empirique : {}".format(dico_p))
 #print("liste_mots")
 #dico_ecart_type = ecart_type_proba_empirique(5,4,dico_p,liste_mots,s)
 #print("dico ecart type : {}".format(dico_ecart_type))
