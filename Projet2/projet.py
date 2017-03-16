@@ -94,6 +94,18 @@ def logprobafast(nb_lettre, m):
         proba += nb_lettre[i]*math.log(m[i])
     return proba
 
+def simule_lettre(m):
+    """ m : frequences des lettres"""
+    r = random.random()
+    if r < m[0]:
+        return 0
+    if r > m[0] and r < m[1] + m[0]:
+        return 1
+    if r > m[0] + m[1] and r < m[1] + m[0] + m[2]:
+        return 2
+    if r >  m[1] + m[0] + m[2]:
+        return 3
+
 def simule_sequence2(lg,m):
     retour = []
     for i in range(lg):
@@ -232,6 +244,21 @@ def comptage_observe(k,sequence,mots):
     nb_occurrences(occur,sequence,mots,k)
     return occur
 
+def transforme_occur(occur, mots):
+    dico = dict()
+    for clef in mots:
+        mot = mots[clef]
+        dico[mot] = occur[clef]
+    return dico
+
+def dico_lettre_to_dico_number(dico):
+    """ne marche pas car transforme_en_nombre renvoi une liste qui est un objet mutable donc ne convient pas comme clef de dictionnaire"""
+    d = dict()
+    for clef in dico:
+        num = transforme_en_nombre(clef)
+        d[num] = dico[clef]
+    return d
+
 def comptage_attendu(k,mots,freq,nb):
     '''
     k : longueur du mot
@@ -353,10 +380,40 @@ def calcule_proba_empirique(n, k, liste_mots, liste_sequences, frequence_lettres
     return dico_proba
 
 #Fonction pour le calcule de l'interval de confiance
-def ecart_type(dico_proba):
-    moyenne = 1/len(dico_proba)
-    for valeur in dico_proba.values():
-        ecart_type = valeur - moyenne
+def ecart_type_proba_empirique(n,k,dico_proba,liste_mot,liste_sequences):
+    """ Non fonctionnel en cours de travail
+    Dans dico_proba on a la probabilité moyenne de chaque mot.
+    On va reparcourir les sequences pour calculer l'écart type de nos variable
+    stocke le nombre de séquences où chaque mot est apparu au moins n fois"""
+    
+    count_nb_sequences = [0 for i in range(len(liste_mots))]
+    liste_ecart_type = [0 for i in range(len(liste_mots))]
+    
+    mots = mots_possibles(k)
+    mots_lettres = mots_possibles_lettres(k)
+    comptage_att = comptage_attendu(k, mots, frequence_lettres, len(liste_sequences[0]))
+    somme = 0
+    
+    moyenne = dico_proba[mot]
+    for sequence in liste_sequences:
+        comptage_obs = comptage_observe(k,sequence,mots)
+        count_nb_sequences_local = [0 for i in range(len(liste_mots))]
+        for key in comptage_obs:
+            for i in range(len(liste_mots)):
+                #si c'est un des mots recherchés et qu'on a nombre d'occurences >= n
+                if liste_mots[i] == key:
+                    if comptage_obs[key] >= n:
+                        count_nb_sequences_local[i] += 1
+        for variance in liste_ecart_type:
+            variance += (count_nb_sequences[i]  - dico_proba[i])**2
+    for v in liste_ecart_type:
+        v = math.sqrt(v)
+    return liste_ecart_type
+
+def intervalle_de_confiance(dico_proba, dico_ecart_type,mot,nb_sequence):
+    b1 = dico_proba[mot] - (dico_ecart_type[mot]/math.sqrt(nb_sequence))
+    b2 = dico_proba[mot] + (dico_ecart_type[mot]/math.sqrt(nb_sequence))
+    return (b1,b2)
 
 def histo_proba_mot(n, liste_mots, proba_mots, nombre_sequences):
     fig, ax = plt.subplots()
@@ -554,28 +611,111 @@ print("")
 #-----------------------------------------------------------------
 
 def construit_M(dico_comptage_mot):
+    """ construit M a partir du dictionnaire des mots de taille 2 """
     #initialisation
-    M = [0,0,0,0]*4
+    M = []
+    for i in range(4):
+        M.append([0,0,0,0])
     for mot in dico_comptage_mot:
         lettre_prec = mot[0]
         lettre_actu = mot[1]
         M[lettre_prec][lettre_actu] += 1
 
     #puis on transforme en proba
-
     L = []
-    for l1 in M:
+    for id_ligne in range(len(M)):
         somme = 0
-        for l2 in l1:
-            somme += M[l1][l2]
+        for colonne in range(len(M[id_ligne])):
+            somme += M[id_ligne][colonne]
         L.append(somme)
 
     i = 0
-    for l1 in M:
-        for l2 in l1:
+    for l1 in range(len(M)):
+        for l2 in range(len(M)):
             M[l1][l2] = M[l1][l2] / (1.0*L[i])
         i += 1
     return M
+   
+
+def construit_M2(sequence):
+    M = []
+    for i in range(4):
+        M.append([0,0,0,0])
+    for i in range(1,len(sequence) - 1):
+        prec = sequence[i-1]
+        actu = sequence[i]
+        #print("prec : {}, actu : {}".format(prec,actu))
+        M[prec][actu] += 1
+        
+    L = []
+    for id_ligne in range(len(M)):
+        somme = 0
+        for colonne in range(len(M[id_ligne])):
+            somme += M[id_ligne][colonne]
+        L.append(somme)
+
+    i = 0
+    for l1 in range(len(M)):
+        for l2 in range(len(M)):
+            M[l1][l2] = M[l1][l2] / (1.0*L[i])
+        i += 1
+    return M
+
+def affiche_M(M):
+    """ fonction affichage"""
+    Lettre = ['A','C','G','T']
+    for i in range(len(M)):
+        c = "lettre précédante : {} : {}".format(Lettre[i],M[i])
+        print(c)
+
+
+
+def genere_sequence_dinucleotide(M, f,l):
+    """ M une matrice des proba sachant la derniere lettre, f la frequence des lettres , l la taille de la sequence à générer """
+    s = []
+    s.append(simule_lettre(f))
+    for i in range(1,l):
+        prec = s[i-1]
+        new_proba = M[prec]
+        new = simule_lettre(new_proba)
+        s.append(new)
+    return s
+
+#-------------- TEST ----------------------
+#mots = mots_possibles_lettres(2)
+#print("mots : {}".format(mots))
+#c = comptage_observe(2, pho,mots)
+#d = transforme_occur(c,mots)
+#print("d : {}".format(d))
+#d2 = dico_lettre_to_dico_number(d)
+#print("d2 : {}".format(d2))
+
+#QUESTION 3
+""" La probabilité d'apparition d'un mot : CATG à une position donnée est
+ P(A)*P(C|A)*P(A|C)*P(T|A)*P(G|T) + P(C)*P(C|A)*P(A|C)*P(T|A)*P(G|T) + P(T)*P(C|A)*P(A|C)*P(T|A)*P(G|T) + P(G)*P(C|A)*P(A|C)*P(T|A)*P(G|T)
+c'est à dire la probabilité de la lettre précédante * fois la proba du mot """
+
+def calcule_proba_mot_M(M, mot,f):
+    p = 0
+    for premiere_lettre in range(len(M)):
+        proba =  f[premiere_lettre] * M[premiere_lettre][mot[0]]
+        for i in range(1,len(mot)):
+            prec = mot[i-1]
+            #print("proba : {}".format(proba))
+            proba = proba * M[prec][mot[i]]
+        p += proba
+    return p
+
+f = frequence_lettres(pho)
+print("f : {}".format(f))
+M = construit_M2(pho)
+affiche_M(M)
+p = calcule_proba_mot_M(M, [ 0,3] ,f)
+print("la proba du mot 03 est : {}".format(p))
+
+#Question 4
+""" Dépend des lettres qui composent le mot ????"""
+    
 #-----------------------------------------------------------------
 #                  TEST FREQUENCES ATTENDUES
 #-----------------------------------------------------------------
