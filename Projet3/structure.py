@@ -1,4 +1,5 @@
 import numpy as np
+import pydotplus.graphviz as gv
 
 class SimpleWeb(object):
     def __init__(self, nombreSommet):
@@ -24,14 +25,14 @@ class SimpleWeb(object):
         self.updateProbas()
 
     def updateProbas(self):
-        """ on parcours tout les noeuds et incremente a partir des arc_entrant"""
+        """ on parcourt tous les noeuds et incremente a partir des arcs entrants"""
         for i in range(0,self.nombreSommet):
             n = self.listeSommet[i]
             for arc in n.arcSortant:
                 head = arc.head
                 tail = arc.tail
-                arc.p = 1 / (len(n.arcSortant)*1.0)
-                self.matriceProba[tail][head] = arc.p
+                arc.proba = 1 / (len(n.arcSortant)*1.0)
+                self.matriceProba[tail][head] = arc.proba
 
     def __str__(self):
         s =  "MatriceProba : {} \n".format(self.matriceProba)
@@ -41,9 +42,15 @@ class SimpleWeb(object):
                 s += n.__str__()
         return s
     
-    def writeGraph(fichier,g):
-        """ g est un graphe de la classe graphviz qu'on va appelé pour la construction"""
-        g.node("bla bla bla")
+    def writeGraph(self, fichier):
+        ''' fichier : nom du fichier dans le repertoire courant '''
+        graph = gv.Dot(graph_type='digraph')
+        for node in self.listeSommet:
+            graph.add_node(gv.Node(node.id_node))
+        for node in self.listeSommet:
+            for arc in node.arcSortant:
+                graph.add_edge(gv.Edge(node.id_node, arc.head, label=arc.proba))
+        graph.write_png(fichier)
         
 class Node(object):
     def __init__(self,id_node):
@@ -74,13 +81,13 @@ class Node(object):
         return s
 
 class Arc(object):
-    def __init__(self,tail, head,p=0):
+    def __init__(self,tail, head, proba=0):
         self.tail = tail
         self.head = head
-        self.p = p
+        self.proba = proba
 
     def __str__(self):
-        return "Arc du noeud : {} vers le noeud {} avec une probabilité : {}".format(self.tail, self.head,self.p)
+        return "Arc du noeud : {} vers le noeud {} avec une probabilité : {}".format(self.tail, self.head,self.proba)
         
 
 G = SimpleWeb(10)
@@ -94,3 +101,5 @@ G.addArc(4,2)
 G.addArc(9,4)
 #G.updateProbas()
 print(G)
+
+G.writeGraph('SimpleWeb')
