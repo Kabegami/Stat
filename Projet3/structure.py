@@ -50,7 +50,7 @@ class SimpleWeb(object):
         for node in self.listeSommet:
             for arc in node.arcSortant:
                 graph.add_edge(gv.Edge(node.id_node, arc.head, label=arc.proba))
-        graph.write_png(fichier)
+        graph.write_png(fichier + ".png")
         
 class Node(object):
     def __init__(self,id_node):
