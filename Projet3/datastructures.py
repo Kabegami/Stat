@@ -1,3 +1,5 @@
+#-*- coding: utf-8 -*-
+
 import numpy as np
 import pydotplus.graphviz as gv
 
@@ -6,6 +8,7 @@ class SimpleWeb(object):
         """ on crée des noeuds lors de l'initialisation"""
         self.nombreSommet = nombreSommet
         self.listeSommet = []
+        self.arcExistant = set()
         for i in range(0,nombreSommet):
             n = Node(i)
             self.listeSommet.append(n)
@@ -16,6 +19,9 @@ class SimpleWeb(object):
         """ id_n1(tail) : int, id_n2(head) : int -> ajoute les arc aux sommets référencés"""
         if id_n1 == id_n2:
             raise Exception("meme noeud")
+        if (id_n1, id_n2) in self.arcExistant:
+            raise Exception("l'arc existe deja")
+        self.arcExistant.add((id_n1,id_n2))
         n1 = self.listeSommet[id_n1]
         n2 = self.listeSommet[id_n2]
         #print("on ajoute un arc de {} vers {}".format(n1,n2))
@@ -28,6 +34,12 @@ class SimpleWeb(object):
         """ on parcourt tous les noeuds et incremente a partir des arcs entrants"""
         for i in range(0,self.nombreSommet):
             n = self.listeSommet[i]
+            #le noeud n'a aucun arc
+            if len(n.arcSortant) == 0:
+                self.matriceProba[i][i] = 1
+            #si il a un nouvelle arc, on supprime l'arc pointant vers lui meme
+            if len(n.arcSortant) == 1 and self.matriceProba[i][i] == 1:
+                self.matriceProba[i][i] = 0
             for arc in n.arcSortant:
                 head = arc.head
                 tail = arc.tail
@@ -50,7 +62,7 @@ class SimpleWeb(object):
         for node in self.listeSommet:
             for arc in node.arcSortant:
                 graph.add_edge(gv.Edge(node.id_node, arc.head, label=arc.proba))
-        graph.write_png(fichier + ".png")
+        graph.write_png(fichier)
         
 class Node(object):
     def __init__(self,id_node):
@@ -88,18 +100,3 @@ class Arc(object):
 
     def __str__(self):
         return "Arc du noeud : {} vers le noeud {} avec une probabilité : {}".format(self.tail, self.head,self.proba)
-        
-
-G = SimpleWeb(10)
-G.addArc(0,1)
-G.addArc(0,2)
-G.addArc(1,3)
-G.addArc(5,4)
-G.addArc(2,6)
-G.addArc(6,4)
-G.addArc(4,2)
-G.addArc(9,4)
-#G.updateProbas()
-print(G)
-
-G.writeGraph('SimpleWeb')
