@@ -61,6 +61,9 @@ class Internaute(object):
                 L.append(self.pi[i]/(1.0*somme_new))
         print(L)
 
+# -----------------------------------------------------------
+#                   FONCTION
+# -----------------------------------------------------------
 
 def trouve_noeud(liste_noeud):
     r = random.random()

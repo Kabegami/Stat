@@ -63,6 +63,25 @@ class SimpleWeb(object):
             for arc in node.arcSortant:
                 graph.add_edge(gv.Edge(node.id_node, arc.head, label=arc.proba))
         graph.write_png(fichier)
+
+    def nextStep(self,pi_t):
+        """ np.array -> np.array"""
+        return np.dot(pi_t,self.matriceProba)
+
+    def convergence_p(self, epsilon, iterMax):
+        """ p : matriceProba"""
+        matricePuissante = self.matriceProba
+        converge = 1
+        cpt = 0
+        while converge > epsilon and cpt < iterMax:
+            newPuissance = np.dot(matricePuissante, matricePuissante)
+            dif = abs(self.matriceProba - newPuissance)
+            converge = np.amax(dif)
+            matricePuissante = newPuissance
+            cpt += 1
+        print("cpt : {}".format(cpt))
+        print("converge : {}".format(converge))
+        return matricePuissante
         
 class Node(object):
     def __init__(self,id_node):
