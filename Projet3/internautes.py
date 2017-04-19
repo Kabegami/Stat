@@ -28,7 +28,7 @@ class Internaute(object):
         f.close()
 
     def ecrit(self, epsilon):
-        #on créer les nouvelles valeurs
+        #on crée les nouvelles valeurs
         f = open(self.fichier, 'a')
         e = (str)(epsilon)
         f.write(e + '\n')
@@ -42,11 +42,12 @@ class Internaute(object):
         while cpt < nb_iter and epsilon > seuil:
             old_pi = self.pi[::]
             self.pas()
-            if cpt % self.nb_pas == 0 and cpt != 0:
-                new_pi = self.pi[::]
-                epsilon = calcule_epsilon(old_pi, new_pi)
-                self.ecrit(epsilon)
-                print("epsilon : {}".format(epsilon))
+            new_pi = self.pi[::]
+            epsilon = calcule_epsilon(old_pi, new_pi)
+            if (self.nb_pas != None and self.fichier != None):
+                if cpt % self.nb_pas == 0 and cpt != 0:
+                    self.ecrit(epsilon)
+                    print("epsilon : {}".format(epsilon))
             cpt += 1
             
 

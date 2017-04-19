@@ -34,11 +34,7 @@ la methode du boss c de la merd du coup on fait un anneau de sommet ou pour evit
             prec = r
         #on ajoute un arc vers le debut
         graphe.addArc(prec, first)
-        #pour avoir la propriete de aperiodique il suffit d'avoir deux cycle de taille 3 et 2 par exemple, mais le probleme
         #D'apres le theoreme de bezout le pgcd(n,n+1) = 1, donc si on a une boucle de taille 1 c'est ergodique.
-        
-        #attention supprime l'element
-        
         return graphe
     
         

@@ -4,6 +4,10 @@ from sys import path
 path.append('.')
 
 from datastructures import SimpleWeb
+from generation import Generateur
+from internautes import Internaute
+from random import randint
+
 
 def creeNanoWeb1():
     n=SimpleWeb(10)
@@ -24,6 +28,16 @@ def creeNanoWeb1():
     n.addArc(9,2)
     n.updateProbas()
     return n;
+
+def calcule_temps():
+    generator = Generateur(20)
+    graph = generator.genere()
+
+    #### Internaute
+    naute = Internaute(graph)
+    pos = randint(0, 20)
+    naute.goTo(pos)
+    
 
 if __name__== "__main__":
     n1=creeNanoWeb1()

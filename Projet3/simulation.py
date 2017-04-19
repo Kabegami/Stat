@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
 from datastructures import *
+from internautes import calcule_epsilon
 
 class Simulation(object):
     def __init__(self, graphe, pi0):
@@ -7,15 +8,32 @@ class Simulation(object):
         self.pi0 = pi0
         self.pi = pi0
 
-    def calcule_piT(self,epsilon, itermax):
-        convergence = 1
+    def trace(self, nb_pas, fichier):
+        self.nb_pas = nb_pas
+        self.fichier = fichier
+        #on supprime l'ancienne valeur
+        f = open(self.fichier, 'w')
+        f.close()
+
+    def ecrit(self, epsilon):
+        #on crée les nouvelles valeurs
+        f = open(self.fichier, 'a')
+        e = (str)(epsilon)
+        f.write(e + '\n')
+        f.close()
+        
+    def calcule_piT(self, itermax, seuil):
+        epsilon = 1
         cpt = 0
-        while convergence > epsilon and cpt < itermax:
+        while epsilon > seuil and cpt < itermax:
             new_pi = self.graphe.nextStep(self.pi)
-            convergence = calcule_convergence(self.pi, new_pi)
+            epsilon = calcule_convergence(self.pi, new_pi)
+            if cpt % self.nb_pas == 0 and cpt != 0:
+                self.ecrit(epsilon)
+                print("epsilon : {}".format(epsilon))
             self.pi = new_pi
             cpt += 1
-        print("convergence : {}".format(convergence))
+        print("convergence : {}".format(epsilon))
         print("nombre d'itération necessaire : {}".format(cpt))
         return self.pi
 

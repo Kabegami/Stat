@@ -68,20 +68,39 @@ class SimpleWeb(object):
         """ np.array -> np.array"""
         return np.dot(pi_t,self.matriceProba)
 
-    def convergence_p(self, epsilon, iterMax):
+    def convergence_p(self, iterMax, seuil):
         """ p : matriceProba"""
         matricePuissante = self.matriceProba
         converge = 1
         cpt = 0
-        while converge > epsilon and cpt < iterMax:
+        # dans un souci de clarte, on laisse tourner pour arrondir les valeurs
+        # ainsi, la condition epsilon > seuil existe mais n'est pas effectuee
+        while cpt < iterMax:
             newPuissance = np.dot(matricePuissante, matricePuissante)
-            dif = abs(self.matriceProba - newPuissance)
-            converge = np.amax(dif)
+            dif = abs(matricePuissante - newPuissance)
+            epsilon = np.amax(dif)
+            if cpt % self.nb_pas == 0 and cpt != 0:
+                self.ecrit(epsilon)
+                print("epsilon : {}".format(epsilon))
             matricePuissante = newPuissance
             cpt += 1
         print("cpt : {}".format(cpt))
-        print("converge : {}".format(converge))
+        print("converge : {}".format(epsilon))
         return matricePuissante
+
+    def trace(self, nb_pas, fichier):
+        self.nb_pas = nb_pas
+        self.fichier = fichier
+        #on supprime l'ancienne valeur
+        f = open(self.fichier, 'w')
+        f.close()
+
+    def ecrit(self, epsilon):
+        #on crée les nouvelles valeurs
+        f = open(self.fichier, 'a')
+        e = (str)(epsilon)
+        f.write(e + '\n')
+        f.close()
         
 class Node(object):
     def __init__(self,id_node):

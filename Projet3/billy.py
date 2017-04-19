@@ -5,11 +5,13 @@ from nanowebs import creeNanoWeb1
 from simulation import *
 
 nanoweb = creeNanoWeb1()
-#pi0 = nanoweb.matriceProba[0]
-pi0 = np.array([1,0,0,0,0,0,0,0,0,0])
-print(pi0)
+pi0 = np.array([0,0,1,0,0,0,0,0,0,0])
+print("etat initial : {}".format(pi0))
 billy = Simulation(nanoweb,pi0)
-v = billy.calcule_piT(0.01,1000)
+billy.trace(100, "epsilons_piT")
+v = billy.calcule_piT(1000, 0.001)
 print(v)
-puissance = nanoweb.convergence_p(0.01,1000)
-print("pupupissance : {}".format(puissance))
+
+nanoweb.trace(1, "epsilons_puissance")
+puissance = nanoweb.convergence_p(100, 0.01)
+print(puissance)

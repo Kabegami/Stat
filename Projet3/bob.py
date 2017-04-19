@@ -13,8 +13,8 @@ bob = Internaute(nanoweb)
 # bob est dans le noeud 3
 bob.goTo(3)
 
-bob.trace(10, "epsilons.txt")
-bob.walk(10000, 0.01)
+#bob.trace(10, "epsilons.txt")
+bob.walk(1000, 0.001)
 bob.showFrequencies()
 
 # question 6
