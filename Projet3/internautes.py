@@ -29,11 +29,11 @@ class Internaute(object):
         f = open(self.fichier, 'w')
         f.close()
 
-    def ecrit(self, epsilon):
+    def ecrit(self, nb, epsilon):
         #on crée les nouvelles valeurs
         f = open(self.fichier, 'a')
         e = (str)(epsilon)
-        f.write(e + '\n')
+        f.write(str(nb) + ' ' + e + '\n')
         f.close()
         
     def walk(self,nb_iter,seuil):
@@ -48,7 +48,7 @@ class Internaute(object):
             epsilon = calcule_epsilon(old_pi, new_pi)
             if (self.nb_pas != None and self.fichier != None):
                 if cpt % self.nb_pas == 0 and cpt != 0:
-                    self.ecrit(epsilon)
+                    self.ecrit(cpt, epsilon)
                     #print("epsilon : {}".format(epsilon))
             cpt += 1
             

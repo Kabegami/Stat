@@ -1,0 +1,9 @@
+plot "epsilons_simulation.txt" using 1:2 with lines
+set term png
+set output "epsilons_simulation.png"
+set size 1, 1
+set xlabel ' Itération '
+set ylabel ' Epsilon '
+set title " Variation d'epsilon (simulation) "
+set key on inside left top
+replot

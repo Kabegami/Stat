@@ -73,7 +73,6 @@ class SimpleWeb(object):
     def convergence_p(self, iterMax, seuil):
         """ p : matriceProba"""
         matricePuissante = self.matriceProba
-        converge = 1
         cpt = 0
         epsilon = 1
         while epsilon > seuil and cpt < iterMax:
@@ -82,7 +81,7 @@ class SimpleWeb(object):
             epsilon = np.amax(dif)
             if self.nb_pas != None and self.fichier != None:
                 if cpt % self.nb_pas == 0 and cpt != 0:
-                    self.ecrit(epsilon)
+                    self.ecrit(cpt, epsilon)
                     #print("epsilon : {}".format(epsilon))
             matricePuissante = newPuissance
             cpt += 1
@@ -99,11 +98,11 @@ class SimpleWeb(object):
         f = open(self.fichier, 'w')
         f.close()
 
-    def ecrit(self, epsilon):
+    def ecrit(self, nb, epsilon):
         #on crée les nouvelles valeurs
         f = open(self.fichier, 'a')
         e = (str)(epsilon)
-        f.write(e + '\n')
+        f.write(str(nb) + ' ' + e + '\n')
         f.close()
         
 class Node(object):

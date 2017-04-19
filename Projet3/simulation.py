@@ -17,11 +17,11 @@ class Simulation(object):
         f = open(self.fichier, 'w')
         f.close()
 
-    def ecrit(self, epsilon):
+    def ecrit(self, nb, epsilon):
         #on crée les nouvelles valeurs
         f = open(self.fichier, 'a')
         e = (str)(epsilon)
-        f.write(e + '\n')
+        f.write(str(nb) + ' ' + e + '\n')
         f.close()
         
     def calcule_piT(self, itermax, seuil):
@@ -32,7 +32,7 @@ class Simulation(object):
             epsilon = calcule_convergence(self.pi, new_pi)
             if self.nb_pas != None and self.fichier != None:
                 if cpt % self.nb_pas == 0 and cpt != 0:
-                    self.ecrit(epsilon)
+                    self.ecrit(cpt, epsilon)
                     #print("epsilon : {}".format(epsilon))
                     self.pi = new_pi
             cpt += 1
