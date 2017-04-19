@@ -8,6 +8,8 @@ class Internaute(object):
         self.graphe = graphe
         self.pos = 0
         self.pi = []
+        self.nb_pas = None
+        self.fichier = None
 
     def goTo(self,id_node):
         self.pos = id_node
@@ -47,8 +49,12 @@ class Internaute(object):
             if (self.nb_pas != None and self.fichier != None):
                 if cpt % self.nb_pas == 0 and cpt != 0:
                     self.ecrit(epsilon)
-                    print("epsilon : {}".format(epsilon))
+                    #print("epsilon : {}".format(epsilon))
             cpt += 1
+            
+        #print("\n------- INTERNAUTE -------")
+        #print("iterations : {}".format(cpt))
+        #print("epsilon : {}\n".format(epsilon))
             
 
     def showFrequencies(self):

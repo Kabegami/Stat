@@ -13,6 +13,8 @@ class SimpleWeb(object):
             n = Node(i)
             self.listeSommet.append(n)
         self.matriceProba = np.zeros((nombreSommet, nombreSommet))
+        self.nb_pas = None
+        self.fichier = None
 
         
     def addArc(self,id_n1,id_n2):
@@ -73,19 +75,21 @@ class SimpleWeb(object):
         matricePuissante = self.matriceProba
         converge = 1
         cpt = 0
-        # dans un souci de clarte, on laisse tourner pour arrondir les valeurs
-        # ainsi, la condition epsilon > seuil existe mais n'est pas effectuee
-        while cpt < iterMax:
+        epsilon = 1
+        while epsilon > seuil and cpt < iterMax:
             newPuissance = np.dot(matricePuissante, matricePuissante)
             dif = abs(matricePuissante - newPuissance)
             epsilon = np.amax(dif)
-            if cpt % self.nb_pas == 0 and cpt != 0:
-                self.ecrit(epsilon)
-                print("epsilon : {}".format(epsilon))
+            if self.nb_pas != None and self.fichier != None:
+                if cpt % self.nb_pas == 0 and cpt != 0:
+                    self.ecrit(epsilon)
+                    #print("epsilon : {}".format(epsilon))
             matricePuissante = newPuissance
             cpt += 1
-        print("cpt : {}".format(cpt))
-        print("converge : {}".format(epsilon))
+            
+        #print("\n------- PUISSANCES -------")
+        #print("iterations : {}".format(cpt))
+        #print("epsilon : {}\n".format(epsilon))
         return matricePuissante
 
     def trace(self, nb_pas, fichier):

@@ -7,6 +7,8 @@ class Simulation(object):
         self.graphe = graphe
         self.pi0 = pi0
         self.pi = pi0
+        self.nb_pas = None
+        self.fichier = None
 
     def trace(self, nb_pas, fichier):
         self.nb_pas = nb_pas
@@ -28,13 +30,16 @@ class Simulation(object):
         while epsilon > seuil and cpt < itermax:
             new_pi = self.graphe.nextStep(self.pi)
             epsilon = calcule_convergence(self.pi, new_pi)
-            if cpt % self.nb_pas == 0 and cpt != 0:
-                self.ecrit(epsilon)
-                print("epsilon : {}".format(epsilon))
-            self.pi = new_pi
+            if self.nb_pas != None and self.fichier != None:
+                if cpt % self.nb_pas == 0 and cpt != 0:
+                    self.ecrit(epsilon)
+                    #print("epsilon : {}".format(epsilon))
+                    self.pi = new_pi
             cpt += 1
-        print("convergence : {}".format(epsilon))
-        print("nombre d'itération necessaire : {}".format(cpt))
+            
+        #print("\n------- SIMULATION -------")
+        #print("iterations : {}".format(cpt))
+        #print("epsilon : {}\n".format(epsilon))
         return self.pi
 
 def calcule_convergence(old_pi, pi):
