@@ -127,19 +127,25 @@ def plot_calc(nb_max, step):
     plt.show()
     
 if __name__== "__main__":
-    '''
+   
     n1=creeNanoWeb1()
-    print(n1) #affichelarepresentationtexte
-    n1.writeGraph("nano1.png") #creelarepresentationimag
-    '''
+    print(n1.matriceProba) #affichelarepresentationtexte
+    #n1.writeGraph("nano1.png") #creelarepresentationimag
+   
 
     #n2=creeNanoWeb2()
     #print(n2) #affichelarepresentationtexte
     #n2.writeGraph("nano2.png") #creelarepresentationimag
 
-    n3 = creeNanoWeb3()
-    print(n3)
-    n3.writeGraph("nano3.png")
+    #n3 = creeNanoWeb3()
+    #print(n3)
+    #n3.writeGraph("nano3.png")
+    
     #plot_calc(1011, 10)
     #res = calcule_temps(1000)
     #print(res)
+    
+    generator = Generateur(10)
+    graph = generator.genere()
+    mat = graph.convergence_p(1000, 0.01)
+    print(mat)

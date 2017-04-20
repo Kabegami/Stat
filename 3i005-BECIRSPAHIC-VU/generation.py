@@ -8,8 +8,8 @@ class Generateur(object):
 -pour avoir un graphe apériodique : il faut 2 cycle et que leur pgcd soit egal a 1
 - pour avoir une seule composante fortement connexe : a chaque fois que l'on rajoute un arc, on verifie qu'il existe un chemin depuis le nouveau sommet vers tous les sommets du graphe ( complexite tres grande)
 une methode plus rapide serai de faire tous nos sommets dans une grande boucle mais on a des graphes trop specifiques, perte de généralité
-methode du boss : On construit notre de graphe de maniere completement aléatoire, puis on met une boucle sur un sommet, ensuite on calcule le graphe des composantes fortements connexes et pour chaque composante sans arc sortant on en genere un aléatoirement
-la methode du boss c de la merd du coup on fait un anneau de sommet ou pour eviter une perte de généralité un anneau d'anneau"""
+methode 2 : On construit notre de graphe de maniere completement aléatoire, puis on met une boucle sur un sommet, ensuite on calcule le graphe des composantes fortements connexes et pour chaque composante sans arc sortant on en genere un aléatoirement
+"""
 
     def __init__(self, nbSommet):
         self.nbSommet = nbSommet
