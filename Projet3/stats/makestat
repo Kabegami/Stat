@@ -1,9 +1,11 @@
-plot "epsilons_simulation.txt" using 1:2 with lines
+plot "epsilons_puissance1.txt" using 1:2 with lines
+replot "epsilons_puissance2.txt" using 1:2 with lines
+replot "epsilons_puissance3.txt" using 1:2 with lines
 set term png
-set output "epsilons_simulation.png"
+set output "epsilons_puissance.png"
 set size 1, 1
 set xlabel ' Itération '
 set ylabel ' Epsilon '
-set title " Variation d'epsilon (simulation) "
+set title " Variation d'epsilon (puissances) "
 set key on inside left top
 replot

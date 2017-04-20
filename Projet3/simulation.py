@@ -34,7 +34,7 @@ class Simulation(object):
                 if cpt % self.nb_pas == 0 and cpt != 0:
                     self.ecrit(cpt, epsilon)
                     #print("epsilon : {}".format(epsilon))
-                    self.pi = new_pi
+            self.pi = new_pi
             cpt += 1
             
         #print("\n------- SIMULATION -------")
