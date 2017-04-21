@@ -86,9 +86,9 @@ class SimpleWeb(object):
             matricePuissante = newPuissance
             cpt += 1
             
-        #print("\n------- PUISSANCES -------")
-        #print("iterations : {}".format(cpt))
-        #print("epsilon : {}\n".format(epsilon))
+        print("\n------- PUISSANCES -------")
+        print("iterations : {}".format(cpt))
+        print("epsilon : {}\n".format(epsilon))
         return matricePuissante
 
     def trace(self, nb_pas, fichier):

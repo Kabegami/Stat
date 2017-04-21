@@ -1,9 +1,0 @@
-plot "epsilons_internaute.txt" using 1:2 with lines
-set term png
-set output "epsilons_internautes.png"
-set size 1, 1
-set xlabel ' Itération '
-set ylabel ' Epsilon '
-set title ' Variation d'epsilon'
-set key on inside left top
-replot
