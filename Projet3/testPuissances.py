@@ -8,7 +8,7 @@ print(puissance)
 print("")
 nanoweb2 = creeNanoWeb2()
 nanoweb2.trace(1, "epsilons_puissance2.txt")
-puissance = nanoweb2.convergence_p(50, 0.01)
+puissance = nanoweb2.convergence_p(1000, 0.01)
 print(puissance)
 
 print("")
