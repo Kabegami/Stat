@@ -24,7 +24,7 @@ print(v)
 
 print("")
 nanoweb3 = creeNanoWeb3()
-pi0 = np.array([0,0,0,0,0,0,0,0,0,1])
+pi0 = np.array([0.1,0.1,0.1,0.1,0.01,0.19,0.1,0.1,0.1,0.1])
 print("etat initial : {}".format(pi0))
 billy = Simulation(nanoweb3,pi0)
 billy.trace(1, "epsilons_simu3.txt")

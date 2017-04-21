@@ -77,7 +77,7 @@ class SimpleWeb(object):
         epsilon = 1
         while epsilon > seuil and cpt < iterMax:
             newPuissance = np.dot(matricePuissante, matricePuissante)
-            dif = abs(matricePuissante - newPuissance)
+            dif = abs(self.matriceProba - newPuissance)
             epsilon = np.amax(dif)
             if self.nb_pas != None and self.fichier != None:
                 if cpt % self.nb_pas == 0 and cpt != 0:
